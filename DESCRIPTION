@@ -1,0 +1,42 @@
+Package: lomda
+Type: Package
+Title: Longitudinal Omics Multivariate Dimension-reduction Analysis
+Version: 0.1.0
+Date: 2026-04-02
+Authors@R: c(
+    person("Your", "Name", email = "your.email@example.com",
+           role = c("aut", "cre"), comment = c(ORCID = "0000-0000-0000-0000"))
+  )
+Description: Implements a two-stage method for the analysis of longitudinal
+    omics data. Stage 1 applies Principal Component Analysis (PCA) to
+    high-dimensional metabolomics (or other omics) measurements collected
+    at multiple visits. Stage 2 fits a Linear Mixed Model (LMM) with a
+    random intercept to the PC scores from Stage 1, enabling inference on
+    time-related trajectories. The package provides estimation, likelihood
+    ratio tests, and Wald tests for the time-effect slope, along with
+    simulated example data and downstream visualization utilities
+    (e.g. PC score plots, loadings, trajectory plots).
+License: GPL-3
+URL: https://github.com/yourusername/lomda
+BugReports: https://github.com/yourusername/lomda/issues
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.0.0)
+Imports:
+    lme4 (>= 1.1-0),
+    lmerTest (>= 3.1-0),
+    ggplot2 (>= 3.4.0),
+    ggrepel,
+    dplyr,
+    tidyr,
+    methods,
+    stats
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    MASS
+VignetteBuilder: knitr
+Config/testthat/edition: 3

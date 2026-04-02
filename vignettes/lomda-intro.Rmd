@@ -1,0 +1,156 @@
+---
+title: "Introduction to lomda: Longitudinal Omics Multivariate DA"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to lomda}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 7,
+  fig.height = 5,
+  out.width  = "100%"
+)
+```
+
+## Overview
+
+The **lomda** package implements a two-stage method for analysing
+high-dimensional longitudinal omics data (metabolomics, proteomics,
+transcriptomics, etc.) measured at repeated clinical visits.
+
+| Stage | Method | Goal |
+|-------|--------|------|
+| 1     | PCA    | Reduce dimensionality; extract dominant axes of variation |
+| 2     | LMM    | Model PC trajectories over time; test for time effects |
+
+The model assumed in Stage 2 for the $k$-th PC and subject $i$ at visit $j$:
+
+$$
+\text{PC}_{k,ij} = \beta_0 + \beta_1 t_{ij} + \boldsymbol{\gamma}^\top
+\mathbf{z}_{ij} + b_i + \varepsilon_{ij}
+$$
+
+where $b_i \sim N(0, \sigma_b^2)$ is a subject-specific random intercept and
+$\varepsilon_{ij} \sim N(0, \sigma^2)$.
+
+---
+
+## Installation
+
+```r
+# From GitHub (development version):
+# install.packages("devtools")
+devtools::install_github("yourusername/lomda")
+```
+
+---
+
+## Quickstart
+
+```{r quickstart}
+library(lomda)
+
+# 1. Simulate a longitudinal omics dataset
+dat <- simulate_lomda_data(
+  n_subjects  = 60,
+  n_visits    = 3,
+  n_features  = 50,
+  n_signal    = 5,     # features with a true time trend
+  time_effect = 0.5,
+  seed        = 2024
+)
+
+cat("Data dimensions:", nrow(dat), "rows x", ncol(dat), "cols\n")
+head(dat[, 1:8])
+```
+
+---
+
+## Stage 1: PCA
+
+```{r pca}
+# Run both stages together
+fit <- lomda(dat, n_pc = 5, covariates = "age")
+print(fit)
+```
+
+### Variance explained
+
+```{r variance, fig.cap="Scree plot showing variance explained by each PC."}
+plot(fit, type = "variance")
+```
+
+### PC Score Plot (PC1 vs PC2)
+
+```{r scores, fig.cap="PC1 vs PC2 scores coloured by visit."}
+plot(fit, type = "scores", color_by = "time")
+```
+
+### Feature Loadings Biplot
+
+```{r loadings, fig.cap="Biplot of feature loadings on PC1 and PC2."}
+plot(fit, type = "loadings", n_top = 8)
+```
+
+---
+
+## Stage 2: LMM and Inference
+
+### Summary of fixed effects
+
+```{r summary}
+summary(fit)
+```
+
+### Likelihood Ratio Test
+
+```{r lrt}
+lrt_res <- lomda_lrt(fit)
+lrt_res
+```
+
+### Wald Test (Satterthwaite df via lmerTest)
+
+```{r wald}
+wald_res <- lomda_wald(fit, use_t = TRUE)
+wald_res
+```
+
+---
+
+## Trajectory Plot
+
+```{r trajectory, fig.cap="Mean PC score trajectory over visits."}
+plot(fit, type = "trajectory", pcs = 1:3)
+```
+
+---
+
+## Advanced: Running Stages Separately
+
+You can run each stage independently:
+
+```{r separate}
+# Stage 1
+pca_res <- lomda_pca(dat, n_pc = 5, covariates = "age")
+str(pca_res, max.level = 1)
+
+# Stage 2 (from pre-computed scores)
+lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, covariates = "age")
+names(lmm_res$fits)
+```
+
+---
+
+## Session Info
+
+```{r session}
+sessionInfo()
+```

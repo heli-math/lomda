@@ -1,0 +1,80 @@
+#' lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis
+#'
+#' @description
+#' The \pkg{lomda} package implements a two-stage statistical pipeline for
+#' analysing high-dimensional longitudinal omics data (e.g. metabolomics,
+#' proteomics, transcriptomics measured at repeated visits).
+#'
+#' \strong{Stage 1 — PCA:}
+#' Principal Component Analysis is applied to the omics matrix (all subjects
+#' and all visits pooled). The top \eqn{K} PCs summarise the dominant axes of
+#' variation in the data while drastically reducing dimensionality.
+#'
+#' \strong{Stage 2 — LMM:}
+#' For each PC, a Linear Mixed Model with a subject-specific random intercept
+#' is fitted:
+#' \deqn{PC_{k,ij} = \beta_0 + \beta_1 t_{ij} + \boldsymbol{\gamma}^\top
+#'   \mathbf{z}_{ij} + b_i + \varepsilon_{ij}}
+#' The time-effect slope \eqn{\hat\beta_1} and its uncertainty are the
+#' primary inferential targets.
+#'
+#' @section Key functions:
+#' \describe{
+#'   \item{\code{\link{lomda}}}{Fit the full two-stage model.}
+#'   \item{\code{\link{lomda_pca}}}{Stage 1 only (PCA).}
+#'   \item{\code{\link{lomda_lmm}}}{Stage 2 only (LMM on provided scores).}
+#'   \item{\code{\link{lomda_lrt}}}{Likelihood ratio test for time effect.}
+#'   \item{\code{\link{lomda_wald}}}{Wald test for time-effect slope.}
+#'   \item{\code{\link{plot.lomda}}}{Dispatch to score, loading, variance, or
+#'     trajectory plots.}
+#'   \item{\code{\link{plot_scores}}}{PC score scatter plot.}
+#'   \item{\code{\link{plot_loadings}}}{Feature loadings bar / biplot.}
+#'   \item{\code{\link{plot_trajectory}}}{Mean PC trajectory over time.}
+#'   \item{\code{\link{plot_variance_explained}}}{Scree plot.}
+#'   \item{\code{\link{simulate_lomda_data}}}{Generate synthetic longitudinal
+#'     omics data.}
+#' }
+#'
+#' @section Data format:
+#' The input data frame must follow a specific layout:
+#' \itemize{
+#'   \item Column 1: \code{ID} — subject identifier.
+#'   \item Column 2: \code{time} — visit number (integer; 1, 2, 3, ...).
+#'   \item Column 3: \code{age} (or any other covariate) — subject-level or
+#'     time-varying covariate.
+#'   \item Columns 4+: omics features (metabolites, proteins, ...).
+#' }
+#'
+#' @section Getting started:
+#' \preformatted{
+#' library(lomda)
+#'
+#' # Simulate data
+#' dat <- simulate_lomda_data(n_subjects = 60, n_visits = 3,
+#'                            n_features = 50, seed = 42)
+#'
+#' # Fit the two-stage model
+#' fit <- lomda(dat, n_pc = 3, covariates = "age")
+#'
+#' # Inference
+#' lomda_lrt(fit)
+#' lomda_wald(fit)
+#'
+#' # Plots
+#' plot(fit, type = "scores")
+#' plot(fit, type = "trajectory")
+#' plot(fit, type = "variance")
+#' plot(fit, type = "loadings")
+#' }
+#'
+#' @references
+#' Bates, D., Maechler, M., Bolker, B., & Walker, S. (2015). Fitting Linear
+#' Mixed-Effects Models Using lme4. \emph{Journal of Statistical Software},
+#' 67(1), 1--48. \doi{10.18637/jss.v067.i01}
+#'
+#' Kuznetsova, A., Brockhoff, P. B., & Christensen, R. H. B. (2017). lmerTest
+#' Package: Tests in Linear Mixed Effects Models. \emph{Journal of Statistical
+#' Software}, 82(13), 1--26. \doi{10.18637/jss.v082.i13}
+#'
+#' @keywords internal
+"_PACKAGE"
