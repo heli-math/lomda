@@ -18,7 +18,7 @@ variation in the data while drastically reducing dimensionality.
 For each PC, a Linear Mixed Model with a subject-specific random intercept
 is fitted:
 \deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
-The time-effect slope \eqn{\hat{\beta}|_1} and its uncertainty are the
+The time-effect slope \eqn{\hat{\beta}_1} and its uncertainty are the
 primary inferential targets.
 }
 \section{Key functions}{
