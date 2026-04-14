@@ -89,13 +89,19 @@ Software}, 82(13), 1--26. \doi{10.18637/jss.v082.i13}
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/yourusername/lomda}
-  \item Report bugs at \url{https://github.com/yourusername/lomda/issues}
+  \item \url{https://github.com/heli-math/lomda}
+  \item Report bugs at \url{https://github.com/heli-math/lomda/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Your Name \email{your.email@example.com} (\href{https://orcid.org/0000-0000-0000-0000}{ORCID})
+\strong{Maintainer}: He Li \email{he.li.math@outlook.com} (\href{https://orcid.org/0009-0000-7288-3330}{ORCID})
+
+Authors:
+\itemize{
+  \item Said el Bouhaddani
+  \item Jeanine Houwing-Duistermaat
+}
 
 }
 \keyword{internal}

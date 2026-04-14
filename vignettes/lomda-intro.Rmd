@@ -1,6 +1,6 @@
 ---
-title: "Introduction to lomda: Longitudinal Omics Multivariate DA"
-author: "Your Name"
+title: "Introduction to lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis"
+author: "He Li"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -33,12 +33,11 @@ transcriptomics, etc.) measured at repeated clinical visits.
 The model assumed in Stage 2 for the $k$-th PC and subject $i$ at visit $j$:
 
 $$
-\text{PC}_{k,ij} = \beta_0 + \beta_1 t_{ij} + \boldsymbol{\gamma}^\top
-\mathbf{z}_{ij} + b_i + \varepsilon_{ij}
+\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k + \boldsymbol{b}_i + \boldsymbol{g}_{ik}
 $$
 
-where $b_i \sim N(0, \sigma_b^2)$ is a subject-specific random intercept and
-$\varepsilon_{ij} \sim N(0, \sigma^2)$.
+where $b_i \sim N(0, \Sigma_b)$ is a subject-specific random intercept and
+$\boldsymbol{g}_{ik} \sim N(0, \Sigma_g)$.
 
 ---
 
@@ -47,7 +46,7 @@ $\varepsilon_{ij} \sim N(0, \sigma^2)$.
 ```r
 # From GitHub (development version):
 # install.packages("devtools")
-devtools::install_github("yourusername/lomda")
+devtools::install_github("heli-math/lomda")
 ```
 
 ---
@@ -59,12 +58,12 @@ library(lomda)
 
 # 1. Simulate a longitudinal omics dataset
 dat <- simulate_lomda_data(
-  n_subjects  = 60,
+  n_subjects  = 50,
   n_visits    = 3,
   n_features  = 50,
   n_signal    = 5,     # features with a true time trend
-  time_effect = 0.5,
-  seed        = 2024
+  time_effect = 1,
+  seed        = 2026
 )
 
 cat("Data dimensions:", nrow(dat), "rows x", ncol(dat), "cols\n")
@@ -77,7 +76,7 @@ head(dat[, 1:8])
 
 ```{r pca}
 # Run both stages together
-fit <- lomda(dat, n_pc = 5, covariates = "age")
+fit <- lomda(dat, n_pc = 3, covariates = "visit")
 print(fit)
 ```
 
@@ -90,7 +89,7 @@ plot(fit, type = "variance")
 ### PC Score Plot (PC1 vs PC2)
 
 ```{r scores, fig.cap="PC1 vs PC2 scores coloured by visit."}
-plot(fit, type = "scores", color_by = "time")
+plot(fit, type = "scores", color_by = "visit")
 ```
 
 ### Feature Loadings Biplot
@@ -139,11 +138,11 @@ You can run each stage independently:
 
 ```{r separate}
 # Stage 1
-pca_res <- lomda_pca(dat, n_pc = 5, covariates = "age")
+pca_res <- lomda_pca(dat, n_pc = 5, covariates = "visit")
 str(pca_res, max.level = 1)
 
 # Stage 2 (from pre-computed scores)
-lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, covariates = "age")
+lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, covariates = "visit")
 names(lmm_res$fits)
 ```
 

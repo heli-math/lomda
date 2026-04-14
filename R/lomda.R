@@ -10,10 +10,11 @@
 #' \strong{Stage 2}: For each selected PC, a Linear Mixed Model (LMM) with
 #' subject-specific random intercepts is fitted:
 #'
-#' \deqn{\bm{t}_{ik} = \bm{\beta}_0 + \bm{\beta}_1 \cdot k + \bm{b}_i + \bm{g}_{ik}}
+#' \deqn{\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k +
+#' \boldsymbol{b}_i + \boldsymbol{g}_{ik}}
 #'
-#' where \eqn{b_i \sim N(0, \Sigma_b^2)} is the random intercept and
-#' \eqn{\varepsilon_{ij} \sim N(0, \sigma^2)}.
+#' where \eqn{b_i \sim N(0, \Sigma_b)} is the random intercept and
+#' \eqn{\boldsymbol{g}_{ik} \sim N(0, \Sigma_g)}.
 #'
 #' @param data A data frame with columns: \code{ID} (subject identifier),
 #'   \code{time} (visit; integer 1, 2, 3, ...), \code{age} (or other

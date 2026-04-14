@@ -1,7 +1,7 @@
 # lomda <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/yourusername/lomda/workflows/R-CMD-check/badge.svg)](https://github.com/yourusername/lomda/actions)
+[![R-CMD-check](https://github.com/heli-math/lomda/workflows/R-CMD-check/badge.svg)](https://github.com/heli-math/lomda/actions)
 [![License: GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 <!-- badges: end -->
 
@@ -23,7 +23,7 @@ It implements a principled two-stage approach:
 ```r
 # Install the development version from GitHub:
 # install.packages("devtools")
-devtools::install_github("yourusername/lomda")
+devtools::install_github("heli-math/lomda")
 ```
 
 ---
@@ -35,12 +35,12 @@ library(lomda)
 
 # Simulate a longitudinal metabolomics dataset
 dat <- simulate_lomda_data(
-  n_subjects  = 60,
+  n_subjects  = 50,
   n_visits    = 3,
-  n_features  = 50,   # metabolites
+  n_features  = 50,   # omics features
   n_signal    = 5,    # features with a true time trend
-  time_effect = 0.5,
-  seed        = 2024
+  time_effect = 1,
+  seed        = 2026
 )
 
 # Fit the two-stage model
@@ -52,7 +52,7 @@ summary(fit)
 # Likelihood Ratio Test (time effect)
 lomda_lrt(fit)
 
-# Wald Test (Satterthwaite df)
+# Wald Test
 lomda_wald(fit)
 
 # ── Plots ────────────────────────────────────
@@ -71,8 +71,8 @@ The input data frame must have this column layout:
 | Column position | Name | Description |
 |----------------|------|-------------|
 | 1 | `ID` | Subject identifier |
-| 2 | `time` | Visit number (integer: 1, 2, 3, …) |
-| 3 | `age` (or other) | Subject-level or time-varying covariate |
+| 2 | `visit` | Visit number (integer: 1, 2, 3, …) |
+| 3 | `age` | Subject age at that visit |
 | 4+ | `M1`, `M2`, … | Omics features (metabolites, proteins, etc.) |
 
 One row per subject × visit.
@@ -92,20 +92,19 @@ explain the maximal variance in the data.
 For each PC *k* and subject *i* at visit *j*:
 
 $$
-\text{PC}_{k,ij} = \beta_0 + \beta_1\,t_{ij} + \boldsymbol{\gamma}^\top\mathbf{z}_{ij} + b_i + \varepsilon_{ij}
+\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k + \boldsymbol{b}_i + \boldsymbol{g}_{ij}
 $$
 
-- $\beta_1$ — **time-effect slope** (primary inferential target)
-- $b_i \sim N(0,\,\sigma_b^2)$ — subject random intercept
-- $\varepsilon_{ij} \sim N(0,\,\sigma^2)$ — residual error
-- $\mathbf{z}_{ij}$ — additional covariates (e.g. age)
+- $\boldsymbol{\beta}_1$ — **time-effect slope** (primary inferential target)
+- $\boldsymbol{b}_i \sim N(0,\,\Sigma_b)$ — subject random intercept
+- $\boldsymbol{g}_{ik} \sim N(0,\,\Sigma_g)$ — residual error
 
 ### Inference
 
 | Test | Function | Description |
 |------|----------|-------------|
 | Likelihood Ratio Test | `lomda_lrt()` | Full model vs. null (time dropped) |
-| Wald Test | `lomda_wald()` | $\hat\beta_1 / \text{SE}$, Satterthwaite df via `lmerTest` |
+| Wald Test | `lomda_wald()` | $\hat{\boldsymbol{\beta}}_1 / \text{SE}$, Satterthwaite df via `lmerTest` |
 
 ---
 
@@ -157,12 +156,12 @@ lomda/
 If you use `lomda` in your research, please cite:
 
 ```
-Your Name (2026). lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis.
-R package version 0.1.0. https://github.com/yourusername/lomda
+He Li, Said el Bouhaddani, Jeanine Houwing-Duistermaat (2026). lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis.
+R package version 0.1.0. https://github.com/heli-math/lomda
 ```
 
 ---
 
 ## License
 
-GPL-3 © Your Name
+GPL-3 © He Li

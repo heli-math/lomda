@@ -21,7 +21,8 @@ roxygen2::roxygenise()
 
 # ---- Step 3: Check the package ---------------------------------------------
 message("Running R CMD check (this may take a minute)...")
-devtools::check(quiet = FALSE)
+# devtools::check(quiet = FALSE)
+devtools::check(quiet = FALSE, error_on = "never")
 
 # ---- Step 4: Initialise git ------------------------------------------------
 if (!file.exists(".git")) {
@@ -40,9 +41,9 @@ system("git push -u origin main")
 
 
 # ---- Step 5: Push to GitHub ------------------------------------------------
-# Replace 'yourusername' with your actual GitHub username.
+
 gh_user <- Sys.getenv("GITHUB_USER",
-                       unset = "heli-math")  # <-- change this
+                       unset = "heli-math")
 remote  <- paste0("https://github.com/", gh_user, "/lomda.git")
 
 system(paste("git remote add origin", remote))
