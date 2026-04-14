@@ -16,14 +16,14 @@
 #' \eqn{g_{ik} \sim N(0, \Sigma_g)}.
 #'
 #' @param data A data frame with columns: \code{ID} (subject identifier),
-#'   \code{time} (visit; integer 1, 2, 3, ...), \code{age} (or other
+#'   \code{visit} (visit; integer 1, 2, 3, ...), \code{age} (or other
 #'   time-invariant covariates), and one column per omics feature. The omics
 #'   columns must start from column 4 onward.
 #' @param n_pc Integer. Number of PCs to extract and model in Stage 2.
 #'   Defaults to \code{3}.
 #' @param covariates Character vector of additional covariate column names to
-#'   include in the Stage 2 LMM (e.g., \code{c("age", "sex")}). Defaults to
-#'   \code{"age"}.
+#'   include in the Stage 2 LMM (e.g., \code{c("age", "visit")}). Defaults to
+#'   \code{"visit"}.
 #' @param scale Logical. Whether to scale the omics features to unit variance
 #'   before PCA. Defaults to \code{TRUE}.
 #' @param center Logical. Whether to center the omics features before PCA.
@@ -35,7 +35,7 @@
 #' \describe{
 #'   \item{\code{pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
 #'   \item{\code{scores}}{Data frame of PC scores merged with metadata
-#'     (ID, time, covariates).}
+#'     (ID, visit, covariates).}
 #'   \item{\code{lmm_fits}}{Named list of \code{lmerMod} objects, one per PC.}
 #'   \item{\code{lmm_null_fits}}{Named list of null \code{lmerMod} objects
 #'     (time dropped) used for LRT.}
@@ -49,7 +49,7 @@
 #' @examples
 #' dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,
 #'                            seed = 42)
-#' fit <- lomda(dat, n_pc = 3, covariates = "time")
+#' fit <- lomda(dat, n_pc = 3, covariates = "visit")
 #' print(fit)
 #' summary(fit)
 #'

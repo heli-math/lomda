@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 ##### FORME: to test/remove: unloadNamespace("lomda")
-##### cannot just ninstall package
+##### restart R session: .rs.restartR()
+##### cannot just ninstall package: remove.packages("lomda")
 # =============================================================================
 # setup_github.R
 # Run this script once to initialise git and push lomda to GitHub.
@@ -61,3 +62,4 @@ Next steps:
   * Add a pkgdown site with: usethis::use_pkgdown_github_pages()
   * Submit to CRAN when ready: devtools::release()
 ")
+
