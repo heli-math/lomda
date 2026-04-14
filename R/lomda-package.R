@@ -13,9 +13,9 @@
 #' \strong{Stage 2 — LMM:}
 #' For each PC, a Linear Mixed Model with a subject-specific random intercept
 #' is fitted:
-#' \deqn{\bm{t}_{ik} = \bm{\beta}_0 + \bm{\beta}_1 \cdot k + \bm{b}_i
-#' + \bm{g}_{ik}}
-#' The time-effect slope \eqn{\hat{\bm{\beta}}|_1} and its uncertainty are the
+#' \deqn{\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k +
+#' \boldsymbol{b}_i + \boldsymbol{g}_{ik}}
+#' The time-effect slope \eqn{\hat{\boldsymbol{\beta}}|_1} and its uncertainty are the
 #' primary inferential targets.
 #'
 #' @section Key functions:

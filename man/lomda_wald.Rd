@@ -27,9 +27,9 @@ A data frame with one row per PC and columns:
 }
 }
 \description{
-Performs a Wald test on the time-effect slope \eqn{\hat{\bm{\beta}}_1} for each
+Performs a Wald test on the time-effect slope \eqn{\hat{\boldsymbol{\beta}}_1} for each
 PC. The test statistic is:
-\deqn{W = \frac{\hat{\bm{\beta}}_1}{\text{SE}(\hat{\bm{\beta}}_1)}}
+\deqn{W = \frac{\hat{\boldsymbol{\beta}}_1}{\text{SE}(\hat{\boldsymbol{\beta}}_1)}}
 which is compared against a standard normal distribution (z-test) or,
 when \code{use_t = TRUE}, against a t-distribution with Satterthwaite
 degrees of freedom (from \pkg{lmerTest}).

@@ -52,7 +52,7 @@ An object of class \code{"lomda"} with the following components:
 }
 }
 \description{
-Fits the two-stage \strong{lomda} model to longitudinal omics data.
+Fits the two-stage \boldsymbol{lomda} model to longitudinal omics data.
 
 \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
 proteins, etc.) pooled across all visits. The resulting PC scores capture
