@@ -7,15 +7,15 @@
 #'
 #' \strong{Stage 1 — PCA:}
 #' Principal Component Analysis is applied to the omics matrix (all subjects
-#' and all visits pooled). The top \eqn{K} PCs summarise the dominant axes of
+#' and all visits pooled). The top \eqn{r} PCs summarise the dominant axes of
 #' variation in the data while drastically reducing dimensionality.
 #'
 #' \strong{Stage 2 — LMM:}
 #' For each PC, a Linear Mixed Model with a subject-specific random intercept
 #' is fitted:
-#' \deqn{PC_{k,ij} = \beta_0 + \beta_1 t_{ij} + \boldsymbol{\gamma}^\top
-#'   \mathbf{z}_{ij} + b_i + \varepsilon_{ij}}
-#' The time-effect slope \eqn{\hat\beta_1} and its uncertainty are the
+#' \deqn{\bm{t}_{ik} = \bm{\beta}_0 + \bm{\beta}_1 \cdot k + \bm{b}_i
+#' + \bm{g}_{ik}}
+#' The time-effect slope \eqn{\hat{\bm{\beta}}|_1} and its uncertainty are the
 #' primary inferential targets.
 #'
 #' @section Key functions:
@@ -68,7 +68,7 @@
 #' }
 #'
 #' @references
-#' Bates, D., Maechler, M., Bolker, B., & Walker, S. (2015). Fitting Linear
+#' Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting Linear
 #' Mixed-Effects Models Using lme4. \emph{Journal of Statistical Software},
 #' 67(1), 1--48. \doi{10.18637/jss.v067.i01}
 #'

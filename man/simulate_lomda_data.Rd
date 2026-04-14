@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate.R
 \name{simulate_lomda_data}
 \alias{simulate_lomda_data}
-\title{Simulate longitudinal omics data for LOMDA}
+\title{Simulate longitudinal omics data for lomda}
 \usage{
 simulate_lomda_data(
   n_subjects = 50,
@@ -12,7 +12,7 @@ simulate_lomda_data(
   time_effect = 0.5,
   sigma_b = 1.5,
   sigma_e = 1,
-  seed = 2024
+  seed = 2026
 )
 }
 \arguments{
@@ -39,7 +39,7 @@ Default \code{1.5}.}
 A data frame with columns:
 \describe{
   \item{\code{ID}}{Subject identifier (character, e.g. \code{"S001"}).}
-  \item{\code{time}}{Visit number (integer 1, 2, ..., \code{n_visits}).}
+  \item{\code{visit}}{Visit number (integer 1, 2, ..., \code{n_visits}).}
   \item{\code{age}}{Subject age (numeric).}
   \item{\code{M1}, \code{M2}, ...}{Omics feature values.}
 }
@@ -47,7 +47,7 @@ The data frame has \code{n_subjects * n_visits} rows.
 }
 \description{
 Generates a synthetic longitudinal omics dataset suitable for testing and
-demonstrating the LOMDA two-stage pipeline. The data structure mirrors a
+demonstrating the \strong{lomda} two-stage pipeline. The data structure mirrors a
 typical metabolomics study: multiple subjects measured at several visits,
 with a latent time trend embedded in the first few features.
 }

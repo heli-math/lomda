@@ -4,7 +4,7 @@
 \alias{plot_scores}
 \title{PC Score Plot (PC1 vs PC2 or any two PCs)}
 \usage{
-plot_scores(x, pc_x = 1L, pc_y = 2L, color_by = "time", label_ids = FALSE)
+plot_scores(x, pc_x = 1L, pc_y = 2L, color_by = "visit", label_ids = FALSE)
 }
 \arguments{
 \item{x}{A \code{lomda} object, or a scores data frame (output of
@@ -14,7 +14,7 @@ plot_scores(x, pc_x = 1L, pc_y = 2L, color_by = "time", label_ids = FALSE)
 
 \item{pc_y}{Integer. Index of the PC for the y-axis. Default \code{2}.}
 
-\item{color_by}{Character. Column to colour by. Default \code{"time"}.}
+\item{color_by}{Character. Column to colour by. Default \code{"visit"}.}
 
 \item{label_ids}{Logical. Whether to add subject ID labels with
 \pkg{ggrepel}. Default \code{FALSE}.}

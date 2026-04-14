@@ -1,7 +1,7 @@
-#' Simulate longitudinal omics data for LOMDA
+#' Simulate longitudinal omics data for lomda
 #'
 #' Generates a synthetic longitudinal omics dataset suitable for testing and
-#' demonstrating the LOMDA two-stage pipeline. The data structure mirrors a
+#' demonstrating the \strong{lomda} two-stage pipeline. The data structure mirrors a
 #' typical metabolomics study: multiple subjects measured at several visits,
 #' with a latent time trend embedded in the first few features.
 #'
@@ -34,7 +34,7 @@
 #' @return A data frame with columns:
 #' \describe{
 #'   \item{\code{ID}}{Subject identifier (character, e.g. \code{"S001"}).}
-#'   \item{\code{time}}{Visit number (integer 1, 2, ..., \code{n_visits}).}
+#'   \item{\code{visit}}{Visit number (integer 1, 2, ..., \code{n_visits}).}
 #'   \item{\code{age}}{Subject age (numeric).}
 #'   \item{\code{M1}, \code{M2}, ...}{Omics feature values.}
 #' }
@@ -54,7 +54,7 @@ simulate_lomda_data <- function(n_subjects  = 50,
                                 time_effect = 0.5,
                                 sigma_b     = 1.5,
                                 sigma_e     = 1.0,
-                                seed        = 2024) {
+                                seed        = 2026) {
 
   set.seed(seed)
   if (n_signal > n_features)
@@ -71,27 +71,32 @@ simulate_lomda_data <- function(n_subjects  = 50,
   mu_k   <- rnorm(n_features, mean = 0, sd = 2)
 
   rows <- vector("list", n_subjects * n_visits)
+  # rows <- vector("character", n_subjects * n_visits)
   idx  <- 1L
 
   for (i in seq_len(n_subjects)) {
     for (j in seq_len(n_visits)) {
       noise  <- rnorm(n_features, mean = 0, sd = sigma_e)
       omics  <- mu_k + lambda * rand_int[i] + beta_k * j + noise
+      # rows[[idx]] <- c(
+      #   list(ID = subject_ids[i], time = j, age = ages[i] + 2 * (j - 1)),
+      #   setNames(as.list(omics), paste0("M", seq_len(n_features)))
+      # )
       rows[[idx]] <- c(
-        list(ID = subject_ids[i], time = j, age = ages[i]),
+        list(
+          ID   = as.character(subject_ids[i]),
+          visit = j,
+          age  = ages[i] + 2 * (j - 1)
+        ),
         setNames(as.list(omics), paste0("M", seq_len(n_features)))
       )
+      # rows[idx] <- c(
+      #   list(ID = subject_ids[i], time = j, age = ages[i]),
+      #   setNames(as.list(omics), paste0("M", seq_len(n_features)))
+      # )
       idx <- idx + 1L
     }
   }
-
-  out <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
-
-  # Coerce types
-  out$time <- as.integer(out$time)
-  out$age  <- as.numeric(out$age)
-  feature_cols <- paste0("M", seq_len(n_features))
-  out[feature_cols] <- lapply(out[feature_cols], as.numeric)
-
+  out <- bind_rows(rows)
   out
 }

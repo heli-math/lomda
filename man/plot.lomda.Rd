@@ -9,7 +9,7 @@
   type = "scores",
   pc_x = 1L,
   pc_y = 2L,
-  color_by = "time",
+  color_by = "visit",
   n_top = 10L,
   ...
 )
@@ -20,15 +20,15 @@
 \item{type}{Character. One of \code{"scores"} (PC1 vs PC2 scatter),
 \code{"loadings"} (feature loadings bar chart), \code{"variance"}
 (scree / variance-explained plot), or \code{"trajectory"} (mean PC
-score over time). Default \code{"scores"}.}
+score over visit). Default \code{"scores"}.}
 
 \item{pc_x}{Integer. PC for the x-axis in score/loading plots. Default 1.}
 
 \item{pc_y}{Integer. PC for the y-axis in score/loading plots. Default 2.}
 
 \item{color_by}{Character. Column name in the score data frame to use for
-colouring points (e.g., \code{"time"} or \code{"age"}).
-Default \code{"time"}.}
+colouring points (e.g., \code{"visit"} or \code{"age"}).
+Default \code{"visit"}.}
 
 \item{n_top}{Integer. Number of top-loading features to label in the
 loadings plot. Default \code{10}.}

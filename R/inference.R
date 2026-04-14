@@ -1,6 +1,6 @@
 #' Likelihood Ratio Test for the time effect in LOMDA
 #'
-#' Tests whether the time-effect slope (\eqn{\beta_1}) is significantly
+#' Tests whether the time-effect slope (\eqn{\bm{\beta}_1}) is significantly
 #' different from zero for each PC, by comparing the full LMM (with time)
 #' against a nested null model (without time). Both models are fitted by
 #' maximum likelihood (\code{REML = FALSE}).
@@ -56,9 +56,9 @@ lomda_lrt <- function(x) {
 
 #' Wald Test for the time-effect slope in LOMDA
 #'
-#' Performs a Wald test on the time-effect slope \eqn{\hat\beta_1} for each
+#' Performs a Wald test on the time-effect slope \eqn{\hat{\bm{\beta}}_1} for each
 #' PC. The test statistic is:
-#' \deqn{W = \frac{\hat\beta_1}{\text{SE}(\hat\beta_1)}}
+#' \deqn{W = \frac{\hat{\bm{\beta}}_1}{\text{SE}(\hat{\bm{\beta}}_1)}}
 #' which is compared against a standard normal distribution (z-test) or,
 #' when \code{use_t = TRUE}, against a t-distribution with Satterthwaite
 #' degrees of freedom (from \pkg{lmerTest}).
@@ -98,7 +98,7 @@ lomda_wald <- function(x, use_t = TRUE) {
     if (use_t) {
       # lmerTest provides Satterthwaite df + t-stat + p-value in coef(summary())
       cs      <- as.data.frame(coef(summary(fit)))
-      time_row <- cs["time", , drop = FALSE]
+      time_row <- cs["visit", , drop = FALSE]
       beta1   <- time_row[1, "Estimate"]
       se      <- time_row[1, "Std. Error"]
       t_stat  <- time_row[1, "t value"]
@@ -111,8 +111,8 @@ lomda_wald <- function(x, use_t = TRUE) {
     } else {
       # z-test (large-sample)
       cs      <- as.data.frame(coef(summary(fit)))
-      beta1   <- cs["time", "Estimate"]
-      se      <- cs["time", "Std. Error"]
+      beta1   <- cs["visit", "Estimate"]
+      se      <- cs["visit", "Std. Error"]
       z_stat  <- beta1 / se
       pval    <- 2 * pnorm(-abs(z_stat))
       df_sw   <- NA_real_

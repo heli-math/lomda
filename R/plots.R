@@ -7,12 +7,12 @@
 #' @param type Character. One of \code{"scores"} (PC1 vs PC2 scatter),
 #'   \code{"loadings"} (feature loadings bar chart), \code{"variance"}
 #'   (scree / variance-explained plot), or \code{"trajectory"} (mean PC
-#'   score over time). Default \code{"scores"}.
+#'   score over visit). Default \code{"scores"}.
 #' @param pc_x Integer. PC for the x-axis in score/loading plots. Default 1.
 #' @param pc_y Integer. PC for the y-axis in score/loading plots. Default 2.
 #' @param color_by Character. Column name in the score data frame to use for
-#'   colouring points (e.g., \code{"time"} or \code{"age"}).
-#'   Default \code{"time"}.
+#'   colouring points (e.g., \code{"visit"} or \code{"age"}).
+#'   Default \code{"visit"}.
 #' @param n_top Integer. Number of top-loading features to label in the
 #'   loadings plot. Default \code{10}.
 #' @param ... Additional arguments passed to underlying plot functions.
@@ -30,7 +30,7 @@
 #' @export
 plot.lomda <- function(x, type = "scores",
                        pc_x = 1L, pc_y = 2L,
-                       color_by = "time",
+                       color_by = "visit",
                        n_top = 10L, ...) {
   type <- match.arg(type, c("scores", "loadings", "variance", "trajectory"))
   p <- switch(type,
@@ -55,7 +55,7 @@ plot.lomda <- function(x, type = "scores",
 #'   \code{\link{lomda_pca}}).
 #' @param pc_x Integer. Index of the PC for the x-axis. Default \code{1}.
 #' @param pc_y Integer. Index of the PC for the y-axis. Default \code{2}.
-#' @param color_by Character. Column to colour by. Default \code{"time"}.
+#' @param color_by Character. Column to colour by. Default \code{"visit"}.
 #' @param label_ids Logical. Whether to add subject ID labels with
 #'   \pkg{ggrepel}. Default \code{FALSE}.
 #'
@@ -74,7 +74,7 @@ plot.lomda <- function(x, type = "scores",
 plot_scores <- function(x,
                         pc_x      = 1L,
                         pc_y      = 2L,
-                        color_by  = "time",
+                        color_by  = "visit",
                         label_ids = FALSE) {
 
   scores_df <- if (inherits(x, "lomda")) x$scores else x
@@ -247,15 +247,15 @@ plot_trajectory <- function(x, pcs = 1:3) {
   scores_df <- x$scores
 
   long <- tidyr::pivot_longer(
-    scores_df[, c("ID", "time", pc_names)],
+    scores_df[, c("ID", "visit", pc_names)],
     cols      = dplyr::all_of(pc_names),
     names_to  = "PC",
     values_to = "score"
   )
-  long$time <- as.integer(long$time)
+  long$visit <- as.integer(long$visit)
 
   # Mean ± SE per time point per PC
-  summ <- dplyr::group_by(long, .data$PC, .data$time)
+  summ <- dplyr::group_by(long, .data$PC, .data$visit)
   summ <- dplyr::summarise(summ,
     mean_score = mean(.data$score),
     se_score   = sd(.data$score) / sqrt(dplyr::n()),
@@ -266,30 +266,30 @@ plot_trajectory <- function(x, pcs = 1:3) {
     # Individual trajectories
     ggplot2::geom_line(
       data = long,
-      ggplot2::aes(x = .data$time, y = .data$score,
+      ggplot2::aes(x = .data$visit, y = .data$score,
                    group = .data$ID),
       color = "grey75", linewidth = 0.35, alpha = 0.6
     ) +
     # Mean trajectory
     ggplot2::geom_line(
       data = summ,
-      ggplot2::aes(x = .data$time, y = .data$mean_score),
+      ggplot2::aes(x = .data$visit, y = .data$mean_score),
       color = "#2166ac", linewidth = 1.2
     ) +
     ggplot2::geom_point(
       data = summ,
-      ggplot2::aes(x = .data$time, y = .data$mean_score),
+      ggplot2::aes(x = .data$visit, y = .data$mean_score),
       color = "#2166ac", size = 3
     ) +
     ggplot2::geom_line(
       data = summ,
-      ggplot2::aes(x = .data$time,
+      ggplot2::aes(x = .data$visit,
                    y = .data$mean_score + 1.96 * .data$se_score),
       linetype = "dashed", color = "#2166ac", linewidth = 0.7
     ) +
     ggplot2::geom_line(
       data = summ,
-      ggplot2::aes(x = .data$time,
+      ggplot2::aes(x = .data$visit,
                    y = .data$mean_score - 1.96 * .data$se_score),
       linetype = "dashed", color = "#2166ac", linewidth = 0.7
     ) +

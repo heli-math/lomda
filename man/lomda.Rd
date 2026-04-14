@@ -7,7 +7,7 @@
 lomda(
   data,
   n_pc = 3,
-  covariates = "age",
+  covariates = NULL,
   scale = TRUE,
   center = TRUE,
   REML = FALSE
@@ -52,7 +52,7 @@ An object of class \code{"lomda"} with the following components:
 }
 }
 \description{
-Fits the two-stage LOMDA model to longitudinal omics data.
+Fits the two-stage \strong{lomda} model to longitudinal omics data.
 
 \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
 proteins, etc.) pooled across all visits. The resulting PC scores capture
@@ -61,15 +61,15 @@ the major axes of variation in the high-dimensional data.
 \strong{Stage 2}: For each selected PC, a Linear Mixed Model (LMM) with
 subject-specific random intercepts is fitted:
 
-\deqn{PC_{ij} = \beta_0 + \beta_1 \cdot \text{time}_{ij} + \gamma \cdot \mathbf{z}_{ij} + b_i + \varepsilon_{ij}}
+\deqn{\bm{t}_{ik} = \bm{\beta}_0 + \bm{\beta}_1 \cdot k + \bm{b}_i + \bm{g}_{ik}}
 
-where \eqn{b_i \sim N(0, \sigma_b^2)} is the random intercept and
+where \eqn{b_i \sim N(0, \Sigma_b^2)} is the random intercept and
 \eqn{\varepsilon_{ij} \sim N(0, \sigma^2)}.
 }
 \examples{
 dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,
                            seed = 42)
-fit <- lomda(dat, n_pc = 3, covariates = "age")
+fit <- lomda(dat, n_pc = 3, covariates = "time")
 print(fit)
 summary(fit)
 

@@ -32,6 +32,11 @@ if (!file.exists(".git")) {
 
 system('git config --global user.name "He Li"')
 system('git config --global user.email "lihestat@outlook.com"')
+system("git add -A")
+system('git commit -m "Initial commit: lomda v0.1.0"')
+system("git log --oneline")
+system("git branch -M main")
+system("git push -u origin main")
 
 
 # ---- Step 5: Push to GitHub ------------------------------------------------

@@ -1,7 +1,7 @@
 #' Longitudinal Omics Multivariate Dimension-reduction Analysis (LOMDA)
 #'
 #' @description
-#' Fits the two-stage LOMDA model to longitudinal omics data.
+#' Fits the two-stage \strong{lomda} model to longitudinal omics data.
 #'
 #' \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
 #' proteins, etc.) pooled across all visits. The resulting PC scores capture
@@ -10,9 +10,9 @@
 #' \strong{Stage 2}: For each selected PC, a Linear Mixed Model (LMM) with
 #' subject-specific random intercepts is fitted:
 #'
-#' \deqn{PC_{ij} = \beta_0 + \beta_1 \cdot \text{time}_{ij} + \gamma \cdot \mathbf{z}_{ij} + b_i + \varepsilon_{ij}}
+#' \deqn{\bm{t}_{ik} = \bm{\beta}_0 + \bm{\beta}_1 \cdot k + \bm{b}_i + \bm{g}_{ik}}
 #'
-#' where \eqn{b_i \sim N(0, \sigma_b^2)} is the random intercept and
+#' where \eqn{b_i \sim N(0, \Sigma_b^2)} is the random intercept and
 #' \eqn{\varepsilon_{ij} \sim N(0, \sigma^2)}.
 #'
 #' @param data A data frame with columns: \code{ID} (subject identifier),
@@ -49,7 +49,7 @@
 #' @examples
 #' dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,
 #'                            seed = 42)
-#' fit <- lomda(dat, n_pc = 3, covariates = "age")
+#' fit <- lomda(dat, n_pc = 3, covariates = "time")
 #' print(fit)
 #' summary(fit)
 #'
@@ -61,7 +61,7 @@
 #' @export
 lomda <- function(data,
                   n_pc      = 3,
-                  covariates = "age",
+                  covariates = NULL,
                   scale     = TRUE,
                   center    = TRUE,
                   REML      = FALSE) {
@@ -69,16 +69,16 @@ lomda <- function(data,
   cl <- match.call()
 
   ## ---- Input checks --------------------------------------------------------
-  required_cols <- c("ID", "time")
+  required_cols <- c("ID", "visit")
   missing_cols  <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0)
     stop("data must contain columns: ", paste(missing_cols, collapse = ", "))
 
-  if (!all(covariates %in% names(data)))
+  if (!all(covariates %in% names(data)) && length(covariates) > 0)
     stop("Some covariates not found in data: ",
          paste(setdiff(covariates, names(data)), collapse = ", "))
 
-  meta_cols   <- c("ID", "time", covariates)
+  meta_cols   <- c("ID", "visit", "age")
   omics_cols  <- setdiff(names(data), meta_cols)
 
   if (length(omics_cols) < 2)
@@ -103,8 +103,8 @@ lomda <- function(data,
   message("Stage 2: LMM for each of ", n_pc, " PCs...")
 
   cov_str   <- if (length(covariates) > 0) paste(covariates, collapse = " + ")
-               else NULL
-  fixed_rhs <- if (!is.null(cov_str)) paste("time +", cov_str) else "time"
+               # else NULL
+  fixed_rhs <- if (!is.null(cov_str)) paste("visit +", cov_str) else "visit"
   null_rhs  <- if (!is.null(cov_str)) cov_str else "1"
 
   lmm_fits      <- vector("list", n_pc)
@@ -164,7 +164,7 @@ print.lomda <- function(x, ...) {
   ve <- round(x$var_explained * 100, 2)
   cat("  Var. explained:", paste0(names(ve), " ", ve, "%", collapse = ", "), "\n\n")
   cat("Stage 2 - LMM (random intercept)\n")
-  cat("  Formula : PC ~ time +", paste(x$covariates, collapse = " + "),
+  cat("  Formula : PC ~ ", paste(x$covariates, collapse = " + "),
       "+ (1 | ID)\n")
   cat("  N obs.  :", nrow(x$scores), "\n")
   cat("  N subj. :", length(unique(x$scores$ID)), "\n\n")
