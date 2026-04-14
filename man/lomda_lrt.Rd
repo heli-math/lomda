@@ -21,7 +21,7 @@ A data frame with one row per PC and columns:
 }
 }
 \description{
-Tests whether the time-effect slope (\eqn{\boldsymbol{\beta}_1}) is significantly
+Tests whether the time-effect slope (\eqn{\beta_1}) is significantly
 different from zero for each PC, by comparing the full LMM (with time)
 against a nested null model (without time). Both models are fitted by
 maximum likelihood (\code{REML = FALSE}).

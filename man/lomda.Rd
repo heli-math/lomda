@@ -52,7 +52,7 @@ An object of class \code{"lomda"} with the following components:
 }
 }
 \description{
-Fits the two-stage \boldsymbol{lomda} model to longitudinal omics data.
+Fits the two-stage \eqn{lomda} model to longitudinal omics data.
 
 \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
 proteins, etc.) pooled across all visits. The resulting PC scores capture
@@ -61,11 +61,10 @@ the major axes of variation in the high-dimensional data.
 \strong{Stage 2}: For each selected PC, a Linear Mixed Model (LMM) with
 subject-specific random intercepts is fitted:
 
-\deqn{\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k +
-\boldsymbol{b}_i + \boldsymbol{g}_{ik}}
+\deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
 
 where \eqn{b_i \sim N(0, \Sigma_b)} is the random intercept and
-\eqn{\boldsymbol{g}_{ik} \sim N(0, \Sigma_g)}.
+\eqn{g_{ik} \sim N(0, \Sigma_g)}.
 }
 \examples{
 dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,

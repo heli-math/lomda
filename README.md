@@ -92,19 +92,19 @@ explain the maximal variance in the data.
 For each PC *k* and subject *i* at visit *j*:
 
 $$
-\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k + \boldsymbol{b}_i + \boldsymbol{g}_{ij}
+t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}
 $$
 
-- $\boldsymbol{\beta}_1$ — **time-effect slope** (primary inferential target)
-- $\boldsymbol{b}_i \sim N(0,\,\Sigma_b)$ — subject random intercept
-- $\boldsymbol{g}_{ik} \sim N(0,\,\Sigma_g)$ — residual error
+- $\beta_1$ — **time-effect slope** (primary inferential target)
+- $b_i \sim N(0,\,\Sigma_b)$ — subject random intercept
+- $g_{ik} \sim N(0,\,\Sigma_g)$ — residual error
 
 ### Inference
 
 | Test | Function | Description |
 |------|----------|-------------|
 | Likelihood Ratio Test | `lomda_lrt()` | Full model vs. null (time dropped) |
-| Wald Test | `lomda_wald()` | $\hat{\boldsymbol{\beta}}_1 / \text{SE}$, Satterthwaite df via `lmerTest` |
+| Wald Test | `lomda_wald()` | $\hat{\beta}_1 / \text{SE}$, Satterthwaite df via `lmerTest` |
 
 ---
 

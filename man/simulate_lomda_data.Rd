@@ -47,7 +47,7 @@ The data frame has \code{n_subjects * n_visits} rows.
 }
 \description{
 Generates a synthetic longitudinal omics dataset suitable for testing and
-demonstrating the \boldsymbol{lomda} two-stage pipeline. The data structure mirrors a
+demonstrating the \eqn{lomda} two-stage pipeline. The data structure mirrors a
 typical metabolomics study: multiple subjects measured at several visits,
 with a latent time trend embedded in the first few features.
 }

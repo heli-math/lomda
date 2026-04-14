@@ -1,6 +1,6 @@
 #' Likelihood Ratio Test for the time effect in LOMDA
 #'
-#' Tests whether the time-effect slope (\eqn{\boldsymbol{\beta}_1}) is significantly
+#' Tests whether the time-effect slope (\eqn{\beta_1}) is significantly
 #' different from zero for each PC, by comparing the full LMM (with time)
 #' against a nested null model (without time). Both models are fitted by
 #' maximum likelihood (\code{REML = FALSE}).
@@ -56,9 +56,9 @@ lomda_lrt <- function(x) {
 
 #' Wald Test for the time-effect slope in LOMDA
 #'
-#' Performs a Wald test on the time-effect slope \eqn{\hat{\boldsymbol{\beta}}_1} for each
+#' Performs a Wald test on the time-effect slope \eqn{\hat{\beta}_1} for each
 #' PC. The test statistic is:
-#' \deqn{W = \frac{\hat{\boldsymbol{\beta}}_1}{\text{SE}(\hat{\boldsymbol{\beta}}_1)}}
+#' \deqn{W = \frac{\hat{\beta}_1}{\text{SE}(\hat{\beta}_1)}}
 #' which is compared against a standard normal distribution (z-test) or,
 #' when \code{use_t = TRUE}, against a t-distribution with Satterthwaite
 #' degrees of freedom (from \pkg{lmerTest}).

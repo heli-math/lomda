@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+##### FORME: to test/remove: unloadNamespace("lomda")
+##### cannot just ninstall package
 # =============================================================================
 # setup_github.R
 # Run this script once to initialise git and push lomda to GitHub.

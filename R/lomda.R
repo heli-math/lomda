@@ -1,7 +1,7 @@
 #' Longitudinal Omics Multivariate Dimension-reduction Analysis (LOMDA)
 #'
 #' @description
-#' Fits the two-stage \boldsymbol{lomda} model to longitudinal omics data.
+#' Fits the two-stage \eqn{lomda} model to longitudinal omics data.
 #'
 #' \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
 #' proteins, etc.) pooled across all visits. The resulting PC scores capture
@@ -10,11 +10,10 @@
 #' \strong{Stage 2}: For each selected PC, a Linear Mixed Model (LMM) with
 #' subject-specific random intercepts is fitted:
 #'
-#' \deqn{\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k +
-#' \boldsymbol{b}_i + \boldsymbol{g}_{ik}}
+#' \deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
 #'
 #' where \eqn{b_i \sim N(0, \Sigma_b)} is the random intercept and
-#' \eqn{\boldsymbol{g}_{ik} \sim N(0, \Sigma_g)}.
+#' \eqn{g_{ik} \sim N(0, \Sigma_g)}.
 #'
 #' @param data A data frame with columns: \code{ID} (subject identifier),
 #'   \code{time} (visit; integer 1, 2, 3, ...), \code{age} (or other
