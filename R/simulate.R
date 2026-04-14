@@ -97,6 +97,6 @@ simulate_lomda_data <- function(n_subjects  = 50,
       idx <- idx + 1L
     }
   }
-  out <- bind_rows(rows)
+  out <- dplyr::bind_rows(rows)
   out
 }
