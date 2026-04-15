@@ -162,6 +162,7 @@ R package version 0.1.0. https://github.com/heli-math/lomda
 
 ---
 
-## License
+## Funding
 
-GPL-3 © He Li
+This work was supported by a STSM Grant from COST Action CA21169, supported by COST (European Cooperation in Science and Technology).
+
