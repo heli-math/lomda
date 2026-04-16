@@ -12,7 +12,7 @@ lomda_pca(data, n_pc = 3, covariates = "age", scale = TRUE, center = TRUE)
 \item{n_pc}{Integer. Number of principal components to extract.}
 
 \item{covariates}{Character vector of metadata column names (besides
-\code{"ID"} and \code{"time"}). These columns are kept in the returned
+\code{"ID"} and \code{"visit"}). These columns are kept in the returned
 score data frame. Defaults to \code{"age"}.}
 
 \item{scale}{Logical. Scale features to unit variance? Default \code{TRUE}.}

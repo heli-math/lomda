@@ -28,7 +28,7 @@ transcriptomics, etc.) measured at repeated clinical visits.
 | Stage | Method | Goal |
 |-------|--------|------|
 | 1     | PCA    | Reduce dimensionality; extract dominant axes of variation |
-| 2     | LMM    | Model PC trajectories over time; test for time effects |
+| 2     | LMM    | Model PC trajectories over visit; test for time effects |
 
 The model assumed in Stage 2 for the $k$-th PC and subject $i$ at visit $j$:
 

@@ -7,7 +7,7 @@
 #' @param data A data frame formatted as described in \code{\link{lomda}}.
 #' @param n_pc Integer. Number of principal components to extract.
 #' @param covariates Character vector of metadata column names (besides
-#'   \code{"ID"} and \code{"time"}). These columns are kept in the returned
+#'   \code{"ID"} and \code{"visit"}). These columns are kept in the returned
 #'   score data frame. Defaults to \code{"age"}.
 #' @param scale Logical. Scale features to unit variance? Default \code{TRUE}.
 #' @param center Logical. Center features? Default \code{TRUE}.
@@ -33,7 +33,7 @@ lomda_pca <- function(data,
                       scale      = TRUE,
                       center     = TRUE) {
 
-  meta_cols  <- c("ID", "time", covariates)
+  meta_cols  <- c("ID", "visit", covariates)
   omics_cols <- setdiff(names(data), meta_cols)
 
   if (length(omics_cols) < 2)
@@ -68,9 +68,9 @@ lomda_pca <- function(data,
 #' have PC scores.
 #'
 #' The model for the \eqn{k}-th PC is:
-#' \deqn{PC_k = \beta_0 + \beta_1 \cdot \text{time} + \gamma \cdot z + b_i + \varepsilon}
+#' \deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
 #'
-#' @param scores_df A data frame containing at least \code{ID}, \code{time},
+#' @param scores_df A data frame containing at least \code{ID}, \code{visit},
 #'   the covariates, and columns named \code{PC1}, \code{PC2}, etc.
 #' @param n_pc Integer. Number of PC columns to model.
 #' @param covariates Character vector of additional fixed-effect covariates.
@@ -103,7 +103,7 @@ lomda_lmm <- function(scores_df,
 
   cov_str   <- if (length(covariates) > 0) paste(covariates, collapse = " + ")
                else NULL
-  fixed_rhs <- if (!is.null(cov_str)) paste("time +", cov_str) else "time"
+  fixed_rhs <- if (!is.null(cov_str)) paste("visit +", cov_str) else "visit"
   null_rhs  <- if (!is.null(cov_str)) cov_str else "1"
 
   fits      <- vector("list", n_pc); names(fits)      <- pc_names

@@ -7,7 +7,7 @@
 lomda_lmm(scores_df, n_pc = 3, covariates = "age", REML = FALSE)
 }
 \arguments{
-\item{scores_df}{A data frame containing at least \code{ID}, \code{time},
+\item{scores_df}{A data frame containing at least \code{ID}, \code{visit},
 the covariates, and columns named \code{PC1}, \code{PC2}, etc.}
 
 \item{n_pc}{Integer. Number of PC columns to model.}
@@ -30,7 +30,7 @@ have PC scores.
 }
 \details{
 The model for the \eqn{k}-th PC is:
-\deqn{PC_k = \beta_0 + \beta_1 \cdot \text{time} + \gamma \cdot z + b_i + \varepsilon}
+\deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
 }
 \examples{
 dat <- simulate_lomda_data(seed = 7)
