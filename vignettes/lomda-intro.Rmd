@@ -138,11 +138,11 @@ You can run each stage independently:
 
 ```{r separate}
 # Stage 1
-pca_res <- lomda_pca(dat, n_pc = 5, covariates = "visit")
+pca_res <- lomda_pca(dat, n_pc = 5)
 str(pca_res, max.level = 1)
 
 # Stage 2 (from pre-computed scores)
-lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, covariates = "visit")
+lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, covariates = "NULL")
 names(lmm_res$fits)
 ```
 

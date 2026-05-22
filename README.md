@@ -44,7 +44,7 @@ dat <- simulate_lomda_data(
 )
 
 # Fit the two-stage model
-fit <- lomda(dat, n_pc = 3, covariates = "age")
+fit <- lomda(dat, n_pc = 3)
 print(fit)
 summary(fit)
 

@@ -3,9 +3,8 @@
 .RData
 .Ruserdata
 *.Rproj
-inst/doc
+inst/
 /doc/
 /Meta/
 /*.tar.gz
 /*.Rcheck/
-setup_github.R

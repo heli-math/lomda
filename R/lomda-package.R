@@ -66,6 +66,10 @@
 #' plot(fit, type = "loadings")
 #' }
 #'
+#' @importFrom stats rnorm sd setNames
+#' @importFrom utils head
+#' @importFrom rlang .data
+#'
 #' @references
 #' Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting Linear
 #' Mixed-Effects Models Using lme4. \emph{Journal of Statistical Software},

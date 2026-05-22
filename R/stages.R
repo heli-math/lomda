@@ -6,9 +6,6 @@
 #'
 #' @param data A data frame formatted as described in \code{\link{lomda}}.
 #' @param n_pc Integer. Number of principal components to extract.
-#' @param covariates Character vector of metadata column names (besides
-#'   \code{"ID"} and \code{"visit"}). These columns are kept in the returned
-#'   score data frame. Defaults to \code{"age"}.
 #' @param scale Logical. Scale features to unit variance? Default \code{TRUE}.
 #' @param center Logical. Center features? Default \code{TRUE}.
 #'
@@ -29,11 +26,10 @@
 #' @export
 lomda_pca <- function(data,
                       n_pc       = 3,
-                      covariates = "age",
                       scale      = TRUE,
                       center     = TRUE) {
 
-  meta_cols  <- c("ID", "visit", covariates)
+  meta_cols  <- c("ID", "visit", "age")
   omics_cols <- setdiff(names(data), meta_cols)
 
   if (length(omics_cols) < 2)
@@ -74,6 +70,7 @@ lomda_pca <- function(data,
 #'   the covariates, and columns named \code{PC1}, \code{PC2}, etc.
 #' @param n_pc Integer. Number of PC columns to model.
 #' @param covariates Character vector of additional fixed-effect covariates.
+#' Defaults to \code{"NULL"}.
 #' @param REML Logical. Use REML? Default \code{FALSE} (required for LRT).
 #'
 #' @return A list with:
@@ -93,7 +90,7 @@ lomda_pca <- function(data,
 #' @export
 lomda_lmm <- function(scores_df,
                       n_pc       = 3,
-                      covariates = "age",
+                      covariates = NULL,
                       REML       = FALSE) {
 
   pc_names <- paste0("PC", seq_len(n_pc))

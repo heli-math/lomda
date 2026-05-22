@@ -8,7 +8,7 @@ lomda(
   data,
   n_pc = 3,
   covariates = NULL,
-  scale = TRUE,
+  scale = FALSE,
   center = TRUE,
   REML = FALSE
 )
@@ -38,17 +38,18 @@ in Stage 2. Defaults to \code{FALSE} (ML, required for LRT).}
 \value{
 An object of class \code{"lomda"} with the following components:
 \describe{
-  \item{\code{pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
+  \item{\code{fit_pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
   \item{\code{scores}}{Data frame of PC scores merged with metadata
     (ID, visit, covariates).}
-  \item{\code{lmm_fits}}{Named list of \code{lmerMod} objects, one per PC.}
-  \item{\code{lmm_null_fits}}{Named list of null \code{lmerMod} objects
+  \item{\code{var_explained}}{Named numeric vector of variance explained by each PC.}
+  \item{\code{loadings}}{Matrix of PCA loadings (features x PCs).}
+  \item{\code{fit_lmm}}{Named list of \code{lmerMod} objects, one per PC.}
+  \item{\code{fit_lmm_null}}{Named list of null \code{lmerMod} objects
     (time dropped) used for LRT.}
   \item{\code{n_pc}}{Number of PCs modelled.}
-  \item{\code{covariates}}{Covariate names used in Stage 2.}
+  \item{\code{covariates}}{Covariate names used in Stage 2. Defaults to \code{"NULL"}.}
+  \item{\code{omics_cols}}{Names of the omics feature columns used in PCA.}
   \item{\code{call}}{The matched call.}
-  \item{\code{data}}{The input data (metadata + PC scores), stored for
-    downstream plotting.}
 }
 }
 \description{

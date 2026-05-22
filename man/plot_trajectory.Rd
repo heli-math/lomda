@@ -15,7 +15,7 @@ plot_trajectory(x, pcs = 1:3)
 A \code{ggplot2} object.
 }
 \description{
-Plots the mean PC score at each visit (± standard error), with individual
+Plots the mean PC score at each visit (+- standard error), with individual
 subject trajectories overlaid as thin lines. Useful for visualising the
 time trend estimated by the Stage 2 LMM.
 }

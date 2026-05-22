@@ -4,7 +4,7 @@
 \alias{lomda_lmm}
 \title{Stage 2: LMM on PC scores}
 \usage{
-lomda_lmm(scores_df, n_pc = 3, covariates = "age", REML = FALSE)
+lomda_lmm(scores_df, n_pc = 3, covariates = NULL, REML = FALSE)
 }
 \arguments{
 \item{scores_df}{A data frame containing at least \code{ID}, \code{visit},
@@ -12,7 +12,8 @@ the covariates, and columns named \code{PC1}, \code{PC2}, etc.}
 
 \item{n_pc}{Integer. Number of PC columns to model.}
 
-\item{covariates}{Character vector of additional fixed-effect covariates.}
+\item{covariates}{Character vector of additional fixed-effect covariates.
+Defaults to \code{"NULL"}.}
 
 \item{REML}{Logical. Use REML? Default \code{FALSE} (required for LRT).}
 }

@@ -33,17 +33,18 @@
 #'
 #' @return An object of class \code{"lomda"} with the following components:
 #' \describe{
-#'   \item{\code{pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
+#'   \item{\code{fit_pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
 #'   \item{\code{scores}}{Data frame of PC scores merged with metadata
 #'     (ID, visit, covariates).}
-#'   \item{\code{lmm_fits}}{Named list of \code{lmerMod} objects, one per PC.}
-#'   \item{\code{lmm_null_fits}}{Named list of null \code{lmerMod} objects
+#'   \item{\code{var_explained}}{Named numeric vector of variance explained by each PC.}
+#'   \item{\code{loadings}}{Matrix of PCA loadings (features x PCs).}
+#'   \item{\code{fit_lmm}}{Named list of \code{lmerMod} objects, one per PC.}
+#'   \item{\code{fit_lmm_null}}{Named list of null \code{lmerMod} objects
 #'     (time dropped) used for LRT.}
 #'   \item{\code{n_pc}}{Number of PCs modelled.}
-#'   \item{\code{covariates}}{Covariate names used in Stage 2.}
+#'   \item{\code{covariates}}{Covariate names used in Stage 2. Defaults to \code{"NULL"}.}
+#'   \item{\code{omics_cols}}{Names of the omics feature columns used in PCA.}
 #'   \item{\code{call}}{The matched call.}
-#'   \item{\code{data}}{The input data (metadata + PC scores), stored for
-#'     downstream plotting.}
 #' }
 #'
 #' @examples
@@ -62,7 +63,7 @@
 lomda <- function(data,
                   n_pc      = 3,
                   covariates = NULL,
-                  scale     = TRUE,
+                  scale     = FALSE,
                   center    = TRUE,
                   REML      = FALSE) {
 
@@ -90,56 +91,24 @@ lomda <- function(data,
 
   ## ---- Stage 1: PCA --------------------------------------------------------
   message("Stage 1: PCA on ", length(omics_cols), " features...")
-  pca_obj <- prcomp(data[, omics_cols, drop = FALSE],
-                    center = center, scale. = scale)
-
-  pc_scores <- as.data.frame(pca_obj$x[, seq_len(n_pc), drop = FALSE])
-  pc_names  <- paste0("PC", seq_len(n_pc))
-  names(pc_scores) <- pc_names
-
-  scores_df <- cbind(data[, meta_cols, drop = FALSE], pc_scores)
+  fit_pca <- lomda_pca(data, n_pc = n_pc, scale = scale, center = center)
+  scores_df <- fit_pca$scores
 
   ## ---- Stage 2: LMM --------------------------------------------------------
   message("Stage 2: LMM for each of ", n_pc, " PCs...")
-
-  cov_str   <- if (length(covariates) > 0) paste(covariates, collapse = " + ")
-               # else NULL
-  fixed_rhs <- if (!is.null(cov_str)) paste("visit +", cov_str) else "visit"
-  null_rhs  <- if (!is.null(cov_str)) cov_str else "1"
-
-  lmm_fits      <- vector("list", n_pc)
-  lmm_null_fits <- vector("list", n_pc)
-  names(lmm_fits)      <- pc_names
-  names(lmm_null_fits) <- pc_names
-
-  for (pc in pc_names) {
-    full_formula <- as.formula(
-      paste0(pc, " ~ ", fixed_rhs, " + (1 | ID)"))
-    null_formula <- as.formula(
-      paste0(pc, " ~ ", null_rhs, " + (1 | ID)"))
-
-    lmm_fits[[pc]] <- suppressMessages(
-      lmerTest::lmer(full_formula, data = scores_df, REML = REML)
-    )
-    lmm_null_fits[[pc]] <- suppressMessages(
-      lmerTest::lmer(null_formula, data = scores_df, REML = REML)
-    )
-  }
-
-  ## ---- Variance explained --------------------------------------------------
-  var_explained <- (pca_obj$sdev^2 / sum(pca_obj$sdev^2))[seq_len(n_pc)]
-  names(var_explained) <- pc_names
+  fit_lmm <- lomda_lmm(scores_df, n_pc = n_pc, covariates = covariates, REML = REML)
 
   ## ---- Return --------------------------------------------------------------
   structure(
     list(
-      pca           = pca_obj,
-      scores        = scores_df,
-      lmm_fits      = lmm_fits,
-      lmm_null_fits = lmm_null_fits,
+      fit_pca       = fit_pca$pca,
+      scores        = fit_pca$scores,
+      var_explained = fit_pca$var_explained,
+      loadings      = fit_pca$loadings,
+      fit_lmm       = fit_lmm$fits,
+      fit_lmm_null  = fit_lmm$null_fits,
       n_pc          = n_pc,
       covariates    = covariates,
-      var_explained = var_explained,
       omics_cols    = omics_cols,
       call          = cl
     ),
@@ -164,8 +133,10 @@ print.lomda <- function(x, ...) {
   ve <- round(x$var_explained * 100, 2)
   cat("  Var. explained:", paste0(names(ve), " ", ve, "%", collapse = ", "), "\n\n")
   cat("Stage 2 - LMM (random intercept)\n")
-  cat("  Formula : PC ~ ", paste(x$covariates, collapse = " + "),
-      "+ (1 | ID)\n")
+  if (length(x$covariates) == 0) {
+    cat("  Formula : PC ~ visit + (1 | ID)\n")
+  } else {
+    cat("  Covariates included:", paste(x$covariates, collapse = ", "), "\n")}
   cat("  N obs.  :", nrow(x$scores), "\n")
   cat("  N subj. :", length(unique(x$scores$ID)), "\n\n")
   cat("Use summary(), lomda_lrt(), lomda_wald(), or plot() for results.\n")
@@ -183,14 +154,14 @@ print.lomda <- function(x, ...) {
 #' @export
 summary.lomda <- function(object, ...) {
   cat("====================================================\n")
-  cat("  LOMDA Summary — Stage 2 Fixed Effects\n")
+  cat("  LOMDA Summary - Stage 2 Fixed Effects\n")
   cat("====================================================\n\n")
 
-  for (pc in names(object$lmm_fits)) {
+  for (pc in colnames(object$loadings)) {
     cat("---", pc,
         sprintf("(%.1f%% variance)", object$var_explained[pc] * 100), "---\n")
-    coef_tbl <- as.data.frame(coef(summary(object$lmm_fits[[pc]])))
-    # Round for display
+    coef_tbl <- as.data.frame(coef(summary(object$fit_lmm[[pc]])))
+    ## round for display
     coef_tbl[, sapply(coef_tbl, is.numeric)] <-
       round(coef_tbl[, sapply(coef_tbl, is.numeric)], 5)
     print(coef_tbl)

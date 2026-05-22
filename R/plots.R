@@ -156,7 +156,7 @@ plot_loadings <- function(x, pc_x = 1L, pc_y = 2L, n_top = 10L) {
   if (!inherits(x, "lomda"))
     stop("x must be a 'lomda' object.")
 
-  rot <- as.data.frame(x$pca$rotation)
+  rot <- as.data.frame(x$fit_pca$rotation)
   xvar <- paste0("PC", pc_x)
   yvar <- if (!is.null(pc_y)) paste0("PC", pc_y) else NULL
 
@@ -218,7 +218,7 @@ plot_loadings <- function(x, pc_x = 1L, pc_y = 2L, n_top = 10L) {
 
 #' Trajectory Plot: Mean PC Score Over Time
 #'
-#' Plots the mean PC score at each visit (± standard error), with individual
+#' Plots the mean PC score at each visit (+- standard error), with individual
 #' subject trajectories overlaid as thin lines. Useful for visualising the
 #' time trend estimated by the Stage 2 LMM.
 #'
@@ -254,7 +254,7 @@ plot_trajectory <- function(x, pcs = 1:3) {
   )
   long$visit <- as.integer(long$visit)
 
-  # Mean ± SE per time point per PC
+  # Mean +- SE per time point per PC
   summ <- dplyr::group_by(long, .data$PC, .data$visit)
   summ <- dplyr::summarise(summ,
     mean_score = mean(.data$score),
@@ -297,7 +297,7 @@ plot_trajectory <- function(x, pcs = 1:3) {
     ggplot2::labs(
       x = "Visit", y = "PC Score",
       title = "PC Score Trajectory Over Time",
-      subtitle = "Blue = group mean ± 95% CI; grey = individual trajectories"
+      subtitle = "Blue = group mean +- 95% CI; grey = individual trajectories"
     ) +
     ggplot2::theme_bw(base_size = 13)
 }
@@ -325,7 +325,7 @@ plot_variance_explained <- function(x, max_pc = NULL) {
   if (!inherits(x, "lomda"))
     stop("x must be a 'lomda' object.")
 
-  sdev <- x$pca$sdev
+  sdev <- x$fit_pca$sdev
   max_pc <- min(max_pc %||% length(sdev), 20L, length(sdev))
   ve   <- (sdev^2 / sum(sdev^2))[seq_len(max_pc)]
   cum_ve <- cumsum(ve)

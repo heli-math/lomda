@@ -31,9 +31,9 @@ lomda_lrt <- function(x) {
   if (!inherits(x, "lomda"))
     stop("x must be a 'lomda' object.")
 
-  results <- lapply(names(x$lmm_fits), function(pc) {
-    ll_full <- as.numeric(logLik(x$lmm_fits[[pc]]))
-    ll_null <- as.numeric(logLik(x$lmm_null_fits[[pc]]))
+  results <- lapply(names(x$fit_lmm), function(pc) {
+    ll_full <- as.numeric(logLik(x$fit_lmm[[pc]]))
+    ll_null <- as.numeric(logLik(x$fit_lmm_null[[pc]]))
     lrt     <- -2 * (ll_null - ll_full)
     pval    <- pchisq(lrt, df = 1, lower.tail = FALSE)
     data.frame(
@@ -92,8 +92,8 @@ lomda_wald <- function(x, use_t = TRUE) {
   if (!inherits(x, "lomda"))
     stop("x must be a 'lomda' object.")
 
-  results <- lapply(names(x$lmm_fits), function(pc) {
-    fit <- x$lmm_fits[[pc]]
+  results <- lapply(names(x$fit_lmm), function(pc) {
+    fit <- x$fit_lmm[[pc]]
 
     if (use_t) {
       # lmerTest provides Satterthwaite df + t-stat + p-value in coef(summary())
