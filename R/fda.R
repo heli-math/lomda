@@ -349,7 +349,7 @@ plot_fda_importance <- function(x, pc = 1, n_top = 15) {
 #'
 #' @param x A \code{lomda_fda} object.
 #' @param type Character. One of \code{"trajectory"}, \code{"importance"}, or
-#'   \code{"all"}.
+#'   \code{"all"}. Defaults to \code{"all"}.
 #' @param pc Integer. PC to plot.
 #' @param pause Logical. If \code{TRUE}, wait for Return between plots when
 #'   multiple plots are requested.

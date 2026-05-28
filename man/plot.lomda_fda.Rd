@@ -10,7 +10,7 @@
 \item{x}{A \code{lomda_fda} object.}
 
 \item{type}{Character. One of \code{"trajectory"}, \code{"importance"}, or
-\code{"all"}.}
+\code{"all"}. Defaults to \code{"all"}.}
 
 \item{pc}{Integer. PC to plot.}
 
