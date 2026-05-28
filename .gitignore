@@ -3,7 +3,11 @@
 .RData
 .Ruserdata
 *.Rproj
-inst/
+inst/*
+!inst/latex/
+inst/latex/*
+!inst/latex/*.tex
+!inst/latex/*.pdf
 /doc/
 /Meta/
 /*.tar.gz

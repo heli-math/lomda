@@ -152,41 +152,6 @@ All plots return `ggplot2` objects and can be further customised.
 
 ---
 
-## Local Development and GitHub Update
-
-After editing roxygen comments, regenerate help files and the namespace:
-
-```r
-devtools::document()
-```
-
-Run local checks:
-
-```r
-devtools::test()
-devtools::check()
-```
-
-Install the edited package locally:
-
-```r
-devtools::install()
-```
-
-Commit and push to GitHub from the package folder:
-
-```bash
-git status
-git add R DESCRIPTION NAMESPACE README.md tests
-git commit -m "Add PCA FDA age trajectory analysis"
-git push origin main
-```
-
-If your active branch is not `main`, replace `main` with the branch shown by
-`git branch --show-current`.
-
----
-
 ## Package Structure
 
 ```
