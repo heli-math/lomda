@@ -15,6 +15,7 @@ It implements a principled two-stage approach:
 |-------|--------|---------|
 | 1 | **PCA** | Compress high-dimensional omics data into a small number of interpretable PCs |
 | 2 | **LMM** (random intercept) | Model PC trajectories over time; test for significant time trends |
+| 2b | **FDA over age** | Smooth PC trajectories over age; predict age-specific scores; rank important metabolites |
 
 ---
 
@@ -60,6 +61,34 @@ plot(fit, type = "scores")       # PC1 vs PC2
 plot(fit, type = "loadings")     # Feature loadings biplot
 plot(fit, type = "variance")     # Scree plot
 plot(fit, type = "trajectory")   # PC score over time
+plot(fit, type = "all", pause = TRUE)
+```
+
+---
+
+## PCA + FDA over Age
+
+Use `lomda_fda()` to smooth PCA scores as functions of age. With
+`method = "auto"`, the package uses `face::face.sparse()` when `face` is
+installed, otherwise it falls back to `stats::smooth.spline()`.
+
+```r
+library(lomda)
+
+dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3,
+                           n_features = 20, seed = 42)
+
+fit <- lomda(dat, n_pc = 3, covariates = "visit")
+fda <- lomda_fda(fit, method = "auto")
+
+predict(fda, ages = c(35, 45, 55, 65))
+predict(fda, newdata = dat[1:5, ], type = "deviation")
+
+lomda_fda_important(fda, pc = 1, n_top = 10)
+
+plot_fda_trajectory(fda, pc = 1)
+plot_fda_importance(fda, pc = 1, n_top = 15)
+plot(fda, type = "all", pc = 1, pause = TRUE)
 ```
 
 ---
@@ -116,8 +145,45 @@ $$
 | `plot_loadings()` | Feature loadings bar chart or biplot |
 | `plot_trajectory()` | Mean PC score over visits ± CI + individual lines |
 | `plot_variance_explained()` | Scree plot with cumulative variance |
+| `plot_fda_trajectory()` | Age-smoothed PC score trajectory |
+| `plot_fda_importance()` | Important metabolites for an FDA-smoothed PC |
 
 All plots return `ggplot2` objects and can be further customised.
+
+---
+
+## Local Development and GitHub Update
+
+After editing roxygen comments, regenerate help files and the namespace:
+
+```r
+devtools::document()
+```
+
+Run local checks:
+
+```r
+devtools::test()
+devtools::check()
+```
+
+Install the edited package locally:
+
+```r
+devtools::install()
+```
+
+Commit and push to GitHub from the package folder:
+
+```bash
+git status
+git add R DESCRIPTION NAMESPACE README.md tests
+git commit -m "Add PCA FDA age trajectory analysis"
+git push origin main
+```
+
+If your active branch is not `main`, replace `main` with the branch shown by
+`git branch --show-current`.
 
 ---
 
@@ -129,6 +195,7 @@ lomda/
 │   ├── lomda-package.R      # Package documentation
 │   ├── lomda.R              # Main two-stage fit: lomda()
 │   ├── stages.R             # lomda_pca(), lomda_lmm()
+│   ├── fda.R                # lomda_fda(), prediction, importance, FDA plots
 │   ├── inference.R          # lomda_lrt(), lomda_wald()
 │   ├── simulate.R           # simulate_lomda_data()
 │   └── plots.R              # plot.lomda(), plot_scores(), …

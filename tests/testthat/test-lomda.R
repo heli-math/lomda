@@ -4,11 +4,11 @@ test_that("simulate_lomda_data returns correct structure", {
   expect_s3_class(dat, "data.frame")
   expect_equal(nrow(dat), 10 * 3)
   expect_true("ID" %in% names(dat))
-  expect_true("time" %in% names(dat))
+  expect_true("visit" %in% names(dat))
   expect_true("age" %in% names(dat))
   expect_true("M1" %in% names(dat))
-  expect_equal(ncol(dat), 3 + 15)  # ID, time, age + features
-  expect_equal(sort(unique(dat$time)), 1:3)
+  expect_equal(ncol(dat), 3 + 15)  # ID, visit, age + features
+  expect_equal(sort(unique(dat$visit)), 1:3)
 })
 
 test_that("lomda() fits without error on simulated data", {
@@ -17,8 +17,8 @@ test_that("lomda() fits without error on simulated data", {
   fit <- expect_no_error(lomda(dat, n_pc = 2, covariates = "age"))
   expect_s3_class(fit, "lomda")
   expect_equal(fit$n_pc, 2)
-  expect_named(fit$lmm_fits, c("PC1", "PC2"))
-  expect_named(fit$lmm_null_fits, c("PC1", "PC2"))
+  expect_named(fit$fit_lmm, c("PC1", "PC2"))
+  expect_named(fit$fit_lmm_null, c("PC1", "PC2"))
 })
 
 test_that("lomda_pca returns correct components", {
@@ -81,6 +81,28 @@ test_that("plot functions return ggplot objects", {
   expect_s3_class(plot_loadings(fit, pc_y=NULL),"ggplot")
   expect_s3_class(plot_variance_explained(fit), "ggplot")
   expect_s3_class(plot_trajectory(fit),         "ggplot")
+})
+
+test_that("lomda_fda estimates trajectories and predicts on age", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_features = 10, seed = 10)
+  fda <- lomda_fda(dat, n_pc = 2, method = "spline", grid_length = 25)
+  expect_s3_class(fda, "lomda_fda")
+  expect_named(fda$fda_fits, c("PC1", "PC2"))
+  pred <- predict(fda, ages = c(35, 45, 55))
+  expect_s3_class(pred, "data.frame")
+  expect_equal(nrow(pred), 3)
+  expect_true(all(c("age", "PC1", "PC2") %in% names(pred)))
+  imp <- lomda_fda_important(fda, pc = 1, n_top = 5)
+  expect_equal(nrow(imp), 5)
+  expect_true(all(c("feature", "importance", "rank") %in% names(imp)))
+})
+
+test_that("FDA plot functions return ggplot objects", {
+  skip_if_not_installed("ggplot2")
+  dat <- simulate_lomda_data(n_subjects = 20, n_features = 10, seed = 11)
+  fda <- lomda_fda(dat, n_pc = 2, method = "spline")
+  expect_s3_class(plot_fda_trajectory(fda, pc = 1), "ggplot")
+  expect_s3_class(plot_fda_importance(fda, pc = 1), "ggplot")
 })
 
 test_that("lomda errors on bad input", {

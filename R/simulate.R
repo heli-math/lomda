@@ -78,10 +78,6 @@ simulate_lomda_data <- function(n_subjects  = 50,
     for (j in seq_len(n_visits)) {
       noise  <- rnorm(n_features, mean = 0, sd = sigma_e)
       omics  <- mu_k + lambda * rand_int[i] + beta_k * j + noise
-      # rows[[idx]] <- c(
-      #   list(ID = subject_ids[i], time = j, age = ages[i] + 2 * (j - 1)),
-      #   setNames(as.list(omics), paste0("M", seq_len(n_features)))
-      # )
       rows[[idx]] <- c(
         list(
           ID   = as.character(subject_ids[i]),
@@ -90,10 +86,6 @@ simulate_lomda_data <- function(n_subjects  = 50,
         ),
         setNames(as.list(omics), paste0("M", seq_len(n_features)))
       )
-      # rows[idx] <- c(
-      #   list(ID = subject_ids[i], time = j, age = ages[i]),
-      #   setNames(as.list(omics), paste0("M", seq_len(n_features)))
-      # )
       idx <- idx + 1L
     }
   }

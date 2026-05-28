@@ -6,21 +6,23 @@
 \usage{
 \method{plot}{lomda}(
   x,
-  type = "scores",
+  type = "all",
   pc_x = 1L,
   pc_y = 2L,
   color_by = "visit",
   n_top = 10L,
+  pause = interactive(),
   ...
 )
 }
 \arguments{
 \item{x}{A \code{lomda} object.}
 
-\item{type}{Character. One of \code{"scores"} (PC1 vs PC2 scatter),
+\item{type}{Character vector. One or more of \code{"scores"} (PC1 vs PC2 scatter),
 \code{"loadings"} (feature loadings bar chart), \code{"variance"}
 (scree / variance-explained plot), or \code{"trajectory"} (mean PC
-score over visit). Default \code{"scores"}.}
+score over visit). Use \code{"all"} to show all plots. Default
+\code{"all"}.}
 
 \item{pc_x}{Integer. PC for the x-axis in score/loading plots. Default 1.}
 
@@ -33,10 +35,13 @@ Default \code{"visit"}.}
 \item{n_top}{Integer. Number of top-loading features to label in the
 loadings plot. Default \code{10}.}
 
+\item{pause}{Logical. If \code{TRUE}, wait for Return between plots when
+multiple plots are requested.}
+
 \item{...}{Additional arguments passed to underlying plot functions.}
 }
 \value{
-A \code{ggplot} object (invisibly).
+A \code{ggplot} object or list of \code{ggplot} objects (invisibly).
 }
 \description{
 Convenience wrapper that dispatches to specialized plot functions. The

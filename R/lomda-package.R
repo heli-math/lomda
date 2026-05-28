@@ -22,6 +22,8 @@
 #'   \item{\code{\link{lomda}}}{Fit the full two-stage model.}
 #'   \item{\code{\link{lomda_pca}}}{Stage 1 only (PCA).}
 #'   \item{\code{\link{lomda_lmm}}}{Stage 2 only (LMM on provided scores).}
+#'   \item{\code{\link{lomda_fda}}}{Alternative Stage 2: smooth PC scores as
+#'     functions of age using FDA.}
 #'   \item{\code{\link{lomda_lrt}}}{Likelihood ratio test for time effect.}
 #'   \item{\code{\link{lomda_wald}}}{Wald test for time-effect slope.}
 #'   \item{\code{\link{plot.lomda}}}{Dispatch to score, loading, variance, or
@@ -30,6 +32,9 @@
 #'   \item{\code{\link{plot_loadings}}}{Feature loadings bar / biplot.}
 #'   \item{\code{\link{plot_trajectory}}}{Mean PC trajectory over time.}
 #'   \item{\code{\link{plot_variance_explained}}}{Scree plot.}
+#'   \item{\code{\link{lomda_fda_important}}}{Rank metabolites contributing
+#'     to FDA-smoothed PCs.}
+#'   \item{\code{\link{plot_fda_trajectory}}}{Age-smoothed PC trajectories.}
 #'   \item{\code{\link{simulate_lomda_data}}}{Generate synthetic longitudinal
 #'     omics data.}
 #' }
@@ -38,7 +43,7 @@
 #' The input data frame must follow a specific layout:
 #' \itemize{
 #'   \item Column 1: \code{ID} — subject identifier.
-#'   \item Column 2: \code{time} — visit number (integer; 1, 2, 3, ...).
+#'   \item Column 2: \code{visit} -- visit number (integer; 1, 2, 3, ...).
 #'   \item Column 3: \code{age} (or any other covariate) — subject-level or
 #'     time-varying covariate.
 #'   \item Columns 4+: omics features (metabolites, proteins, ...).
