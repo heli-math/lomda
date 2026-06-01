@@ -1,4 +1,9 @@
-# lomda
+# lomda <img src="man/figures/logo.png" align="right" height="139" alt="" />
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/heli-math/lomda/workflows/R-CMD-check/badge.svg)](https://github.com/heli-math/lomda/actions)
+[![License: GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+<!-- badges: end -->
 
 **L**ongitudinal **O**mics **M**ultivariate **D**imension-reduction
 **A**nalysis
