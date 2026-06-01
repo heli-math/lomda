@@ -21,23 +21,28 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-The **lomda** package implements a two-stage method for analysing
+The **lomda** package implements two-stage methods for analysing
 high-dimensional longitudinal omics data (metabolomics, proteomics,
-transcriptomics, etc.) measured at repeated clinical visits.
+transcriptomics, etc.) measured repeatedly over time.
 
 | Stage | Method | Goal |
 |-------|--------|------|
 | 1     | PCA    | Reduce dimensionality; extract dominant axes of variation |
-| 2     | LMM    | Model PC trajectories over visit; test for time effects |
+| 2a    | LMM over `visit` | Model PC trajectories over visit; test for visit effects |
+| 2b    | FDA over `age` | Smooth PC trajectories over age; predict age-specific scores |
 
-The model assumed in Stage 2 for the $k$-th PC and subject $i$ at visit $j$:
+For the LMM workflow, the model for the $k$-th PC and subject $i$ at visit
+$j$ is:
 
 $$
-\boldsymbol{t}_{ik} = \boldsymbol{\beta}_0 + \boldsymbol{\beta}_1 \cdot k + \boldsymbol{b}_i + \boldsymbol{g}_{ik}
+t_{ijk} = \beta_{0k} + \beta_{1k} visit_{ij} + b_{ik} + e_{ijk}.
 $$
 
-where $b_i \sim N(0, \Sigma_b)$ is a subject-specific random intercept and
-$\boldsymbol{g}_{ik} \sim N(0, \Sigma_g)$.
+For the FDA workflow, the PC score is smoothed as a function of age:
+
+$$
+t_{ijk} = \mu_k(age_{ij}) + u_{ik}(age_{ij}) + e_{ijk}.
+$$
 
 ---
 
@@ -75,8 +80,8 @@ head(dat[, 1:8])
 ## Stage 1: PCA
 
 ```{r pca}
-# Run both stages together
-fit <- lomda(dat, n_pc = 3, covariates = "visit")
+# Run PCA + LMM over visit
+fit <- lomda(dat, n_pc = 3, time = "visit")
 print(fit)
 ```
 
@@ -132,6 +137,24 @@ plot(fit, type = "trajectory", pcs = 1:3)
 
 ---
 
+## Stage 2b: FDA Over Age
+
+For age-indexed trajectories, use the same front-door function with
+`time = "age"` and choose the FDA smoother with `method_fda`.
+
+```{r fda-age, fig.cap="Age-smoothed trajectory for PC1."}
+fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+summary(fit_age)
+plot_fda_trajectory(fit_age, pc = 1)
+```
+
+```{r fda-predict}
+predict(fit_age, ages = c(35, 45, 55, 65))
+lomda_fda_important(fit_age, pc = 1, n_top = 10)
+```
+
+---
+
 ## Advanced: Running Stages Separately
 
 You can run each stage independently:
@@ -142,7 +165,7 @@ pca_res <- lomda_pca(dat, n_pc = 5)
 str(pca_res, max.level = 1)
 
 # Stage 2 (from pre-computed scores)
-lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, covariates = "NULL")
+lmm_res <- lomda_lmm(pca_res$scores, n_pc = 5, adjust = NULL)
 names(lmm_res$fits)
 ```
 

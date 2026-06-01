@@ -14,11 +14,52 @@ test_that("simulate_lomda_data returns correct structure", {
 test_that("lomda() fits without error on simulated data", {
   dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
                              n_features = 10, seed = 2)
-  fit <- expect_no_error(lomda(dat, n_pc = 2, covariates = "age"))
+  fit <- expect_no_error(lomda(dat, n_pc = 2, time = "visit"))
   expect_s3_class(fit, "lomda")
+  expect_equal(fit$stage2, "lmm")
+  expect_equal(fit$time, "visit")
   expect_equal(fit$n_pc, 2)
   expect_named(fit$fit_lmm, c("PC1", "PC2"))
   expect_named(fit$fit_lmm_null, c("PC1", "PC2"))
+})
+
+test_that("lomda() supports adjustment covariates for visit LMM", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
+                             n_features = 10, seed = 12)
+  dat$batch <- rep(c("A", "B"), length.out = nrow(dat))
+  fit <- expect_no_error(lomda(dat, n_pc = 2, time = "visit",
+                               adjust = "batch"))
+  expect_equal(fit$adjust, "batch")
+  expect_true("batch" %in% names(fit$scores))
+  expect_false("batch" %in% fit$omics_cols)
+})
+
+test_that("lomda() routes age analysis to FDA", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
+                             n_features = 10, seed = 13)
+  fit <- expect_no_error(lomda(dat, n_pc = 2, time = "age",
+                               method_fda = "spline", grid_length = 25))
+  expect_s3_class(fit, "lomda_fda")
+  expect_s3_class(fit, "lomda")
+  expect_equal(fit$stage2, "fda")
+  expect_equal(fit$time, "age")
+  expect_named(fit$fda_fits, c("PC1", "PC2"))
+  pred <- predict(fit, ages = c(35, 45, 55))
+  expect_equal(nrow(pred), 3)
+})
+
+test_that("lomda() rejects FDA method for visit LMM", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
+                             n_features = 10, seed = 14)
+  expect_error(lomda(dat, n_pc = 2, time = "visit", method_fda = "face"),
+               "method_fda is only used")
+})
+
+test_that("lomda() rejects ambiguous FDA method alias", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
+                             n_features = 10, seed = 15)
+  expect_error(lomda(dat, n_pc = 2, time = "age", method_fda = "fda"),
+               "should be one of")
 })
 
 test_that("lomda_pca returns correct components", {
@@ -112,5 +153,5 @@ test_that("lomda errors on bad input", {
   # n_pc too large
   expect_error(lomda(dat, n_pc = 100), "n_pc")
   # Bad covariate
-  expect_error(lomda(dat, covariates = "nonexistent"), "nonexistent")
+  expect_error(lomda(dat, adjust = "nonexistent"), "nonexistent")
 })

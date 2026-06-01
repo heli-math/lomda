@@ -4,16 +4,20 @@
 \alias{lomda_lmm}
 \title{Stage 2: LMM on PC scores}
 \usage{
-lomda_lmm(scores_df, n_pc = 3, covariates = NULL, REML = FALSE)
+lomda_lmm(scores_df, n_pc = 3, time_col = "visit", adjust = NULL, REML = FALSE)
 }
 \arguments{
-\item{scores_df}{A data frame containing at least \code{ID}, \code{visit},
-the covariates, and columns named \code{PC1}, \code{PC2}, etc.}
+\item{scores_df}{A data frame containing at least \code{ID}, the time
+variable, optional adjustment covariates, and columns named \code{PC1},
+\code{PC2}, etc.}
 
 \item{n_pc}{Integer. Number of PC columns to model.}
 
-\item{covariates}{Character vector of additional fixed-effect covariates.
-Defaults to \code{"NULL"}.}
+\item{time_col}{Character. Time variable used as the fixed effect in the
+LMM. Defaults to \code{"visit"}.}
+
+\item{adjust}{Character vector of additional fixed-effect covariates.
+Defaults to \code{NULL}.}
 
 \item{REML}{Logical. Use REML? Default \code{FALSE} (required for LRT).}
 }
@@ -21,7 +25,8 @@ Defaults to \code{"NULL"}.}
 A list with:
 \describe{
   \item{\code{fits}}{Named list of \code{lmerMod} full-model fits.}
-  \item{\code{null_fits}}{Named list of null-model fits (time dropped).}
+  \item{\code{null_fits}}{Named list of null-model fits with the time
+    variable dropped.}
 }
 }
 \description{
@@ -31,7 +36,8 @@ have PC scores.
 }
 \details{
 The model for the \eqn{k}-th PC is:
-\deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
+\deqn{t_{ijk} = \beta_{0k} + \beta_{1k} time_{ij} +
+  z_{ij}^\top \gamma_k + b_{ik} + e_{ijk}.}
 }
 \examples{
 dat <- simulate_lomda_data(seed = 7)

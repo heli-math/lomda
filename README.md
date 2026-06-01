@@ -1,200 +1,184 @@
-# lomda <img src="man/figures/logo.png" align="right" height="139" alt="" />
+# lomda
 
-<!-- badges: start -->
-[![R-CMD-check](https://github.com/heli-math/lomda/workflows/R-CMD-check/badge.svg)](https://github.com/heli-math/lomda/actions)
-[![License: GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-<!-- badges: end -->
+**L**ongitudinal **O**mics **M**ultivariate **D**imension-reduction
+**A**nalysis
 
-**L**ongitudinal **O**mics **M**ultivariate **D**imension-reduction **A**nalysis
+`lomda` is an R package for analysing high-dimensional longitudinal omics data,
+including metabolomics, proteomics, transcriptomics, and related repeated
+measurement data.
 
-`lomda` is an R package for analysing high-dimensional longitudinal omics data
-(metabolomics, proteomics, transcriptomics) measured at repeated clinical visits.
-It implements a principled two-stage approach:
+The package uses a two-stage workflow. Stage 1 is shared by all analyses:
+Principal Component Analysis (PCA) reduces the high-dimensional omics block to
+a small number of PC scores. Stage 2 models those estimated PC scores using the
+time scale chosen by the user.
 
 | Stage | Method | Purpose |
 |-------|--------|---------|
-| 1 | **PCA** | Compress high-dimensional omics data into a small number of interpretable PCs |
-| 2 | **LMM** (random intercept) | Model PC trajectories over time; test for significant time trends |
-| 2b | **FDA over age** | Smooth PC trajectories over age; predict age-specific scores; rank important metabolites |
-
----
+| 1 | PCA | Compress correlated omics features into PC scores |
+| 2a | LMM over `visit` | Model visit-indexed PC trajectories with random intercepts |
+| 2b | FDA over `age` | Smooth age-indexed PC trajectories and predict age-specific scores |
 
 ## Installation
 
 ```r
-# Install the development version from GitHub:
 # install.packages("devtools")
 devtools::install_github("heli-math/lomda")
 ```
-
----
 
 ## Quick Example
 
 ```r
 library(lomda)
 
-# Simulate a longitudinal metabolomics dataset
 dat <- simulate_lomda_data(
-  n_subjects  = 50,
-  n_visits    = 3,
-  n_features  = 50,   # omics features
-  n_signal    = 5,    # features with a true time trend
+  n_subjects = 50,
+  n_visits = 3,
+  n_features = 50,
+  n_signal = 5,
   time_effect = 1,
-  seed        = 2026
+  seed = 2026
 )
 
-# Fit the two-stage model
-fit <- lomda(dat, n_pc = 3)
-print(fit)
-summary(fit)
+# Stage 2a: PCA + LMM over visit
+fit_visit <- lomda(dat, n_pc = 3, time = "visit")
+print(fit_visit)
+summary(fit_visit)
 
-# ── Inference ────────────────────────────────
-# Likelihood Ratio Test (time effect)
-lomda_lrt(fit)
+lomda_lrt(fit_visit)
+lomda_wald(fit_visit)
 
-# Wald Test
-lomda_wald(fit)
+plot(fit_visit, type = "scores")
+plot(fit_visit, type = "trajectory")
+plot(fit_visit, type = "all", pause = TRUE)
 
-# ── Plots ────────────────────────────────────
-plot(fit, type = "scores")       # PC1 vs PC2
-plot(fit, type = "loadings")     # Feature loadings biplot
-plot(fit, type = "variance")     # Scree plot
-plot(fit, type = "trajectory")   # PC score over time
-plot(fit, type = "all", pause = TRUE)
+# Stage 2b: PCA + FDA over age
+fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+summary(fit_age)
+
+predict(fit_age, ages = c(35, 45, 55, 65))
+lomda_fda_important(fit_age, pc = 1, n_top = 10)
+
+plot_fda_trajectory(fit_age, pc = 1)
+plot_fda_importance(fit_age, pc = 1)
+plot(fit_age, type = "all", pc = 1, pause = TRUE)
 ```
 
----
+## Choosing the Stage 2 Model
 
-## PCA + FDA over Age
-
-Use `lomda_fda()` to smooth PCA scores as functions of age. With
-`method = "auto"`, the package uses `face::face.sparse()` when `face` is
-installed, otherwise it falls back to `stats::smooth.spline()`.
+Use one public front door:
 
 ```r
-library(lomda)
-
-dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3,
-                           n_features = 20, seed = 42)
-
-fit <- lomda(dat, n_pc = 3, covariates = "visit")
-fda <- lomda_fda(fit, method = "auto")
-
-predict(fda, ages = c(35, 45, 55, 65))
-predict(fda, newdata = dat[1:5, ], type = "deviation")
-
-lomda_fda_important(fda, pc = 1, n_top = 10)
-
-plot_fda_trajectory(fda, pc = 1)
-plot_fda_importance(fda, pc = 1, n_top = 15)
-plot(fda, type = "all", pc = 1, pause = TRUE)
+lomda(dat, time = "visit")
+lomda(dat, time = "age", method_fda = "spline")
 ```
 
----
+For visit-indexed analysis, `lomda()` fits PCA followed by LMM:
+
+```r
+fit_visit <- lomda(dat, time = "visit", adjust = c("sex", "batch"))
+```
+
+For age-indexed analysis, `lomda()` fits PCA followed by FDA:
+
+```r
+fit_age <- lomda(dat, time = "age", method_fda = "spline")
+fit_age <- lomda(dat, time = "age", method_fda = "face")
+```
+
+The lower-level `lomda_fda()` function remains available for advanced users and
+for backward-compatible scripts.
 
 ## Data Format
 
-The input data frame must have this column layout:
+The input data frame should have this layout:
 
-| Column position | Name | Description |
-|----------------|------|-------------|
+| Column | Name | Description |
+|--------|------|-------------|
 | 1 | `ID` | Subject identifier |
-| 2 | `visit` | Visit number (integer: 1, 2, 3, …) |
+| 2 | `visit` | Visit number |
 | 3 | `age` | Subject age at that visit |
-| 4+ | `M1`, `M2`, … | Omics features (metabolites, proteins, etc.) |
+| 4+ | omics features | Metabolites, proteins, genes, or other omics variables |
 
-One row per subject × visit.
-
----
+One row is one subject-visit observation.
 
 ## Statistical Model
 
-### Stage 1 — PCA
+### Stage 1: PCA
 
-All omics measurements (pooled across subjects and visits) are centred and
-scaled, then decomposed via singular value decomposition. The top *K* PCs
-explain the maximal variance in the data.
+All omics measurements are pooled across subjects and visits, then centred and
+optionally scaled. PCA maps the omics block to PC scores. These PC scores are
+the estimated low-dimensional molecular profiles used in Stage 2.
 
-### Stage 2 — LMM
+### Stage 2a: LMM Over Visit
 
-For each PC *k* and subject *i* at visit *j*:
+When `time = "visit"`, each PC score is modelled with a linear mixed model with
+a subject-specific random intercept. This is useful for formal testing of
+visit-related change.
 
-$$
-t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}
-$$
+Use:
 
-- $\beta_1$ — **time-effect slope** (primary inferential target)
-- $b_i \sim N(0,\,\Sigma_b)$ — subject random intercept
-- $g_{ik} \sim N(0,\,\Sigma_g)$ — residual error
+```r
+lomda_lrt(fit_visit)
+lomda_wald(fit_visit)
+```
 
-### Inference
+### Stage 2b: FDA Over Age
 
-| Test | Function | Description |
-|------|----------|-------------|
-| Likelihood Ratio Test | `lomda_lrt()` | Full model vs. null (time dropped) |
-| Wald Test | `lomda_wald()` | $\hat{\beta}_1 / \text{SE}$, Satterthwaite df via `lmerTest` |
+When `time = "age"`, each PC score is smoothed as a function of age. This is
+useful when biological age is the scientific time scale and the goal is to
+describe, predict, or visualize smooth molecular trajectories.
 
----
+Use:
+
+```r
+predict(fit_age, ages = c(40, 50, 60))
+predict(fit_age, newdata = dat[1:5, ], type = "deviation")
+lomda_fda_important(fit_age, pc = 1)
+```
 
 ## Downstream Plots
 
 | Function | Plot |
 |----------|------|
-| `plot_scores()` | PC score scatter (any two PCs, coloured by metadata) |
-| `plot_loadings()` | Feature loadings bar chart or biplot |
-| `plot_trajectory()` | Mean PC score over visits ± CI + individual lines |
-| `plot_variance_explained()` | Scree plot with cumulative variance |
+| `plot_scores()` | PC score scatter plot |
+| `plot_loadings()` | Feature loading bar chart or biplot |
+| `plot_trajectory()` | Mean PC trajectory over visit |
+| `plot_variance_explained()` | Scree plot |
 | `plot_fda_trajectory()` | Age-smoothed PC score trajectory |
-| `plot_fda_importance()` | Important metabolites for an FDA-smoothed PC |
+| `plot_fda_importance()` | Important features for an FDA-smoothed PC |
 
-All plots return `ggplot2` objects and can be further customised.
-
----
+All plot functions return `ggplot2` objects and can be customized.
 
 ## Package Structure
 
-```
+```text
 lomda/
-├── R/
-│   ├── lomda-package.R      # Package documentation
-│   ├── lomda.R              # Main two-stage fit: lomda()
-│   ├── stages.R             # lomda_pca(), lomda_lmm()
-│   ├── fda.R                # lomda_fda(), prediction, importance, FDA plots
-│   ├── inference.R          # lomda_lrt(), lomda_wald()
-│   ├── simulate.R           # simulate_lomda_data()
-│   └── plots.R              # plot.lomda(), plot_scores(), …
-├── tests/testthat/          # Unit tests
-├── vignettes/               # Package vignette
-├── DESCRIPTION
-├── NAMESPACE
-└── README.md
+|-- R/
+|   |-- lomda-package.R
+|   |-- lomda.R
+|   |-- stages.R
+|   |-- fda.R
+|   |-- inference.R
+|   |-- simulate.R
+|   `-- plots.R
+|-- tests/testthat/
+|-- vignettes/
+|-- DESCRIPTION
+|-- NAMESPACE
+`-- README.md
 ```
-
----
-
-## Dependencies
-
-- [`lme4`](https://CRAN.R-project.org/package=lme4) — mixed model fitting
-- [`lmerTest`](https://CRAN.R-project.org/package=lmerTest) — Satterthwaite df + Wald tests
-- [`ggplot2`](https://CRAN.R-project.org/package=ggplot2) — visualisations
-- [`ggrepel`](https://CRAN.R-project.org/package=ggrepel) — non-overlapping labels
-- [`dplyr`](https://CRAN.R-project.org/package=dplyr) / [`tidyr`](https://CRAN.R-project.org/package=tidyr) — data manipulation
-
----
 
 ## Citation
 
 If you use `lomda` in your research, please cite:
 
-```
-He Li, Said el Bouhaddani, Jeanine Houwing-Duistermaat (2026). lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis.
+```text
+He Li, Said el Bouhaddani, Jeanine Houwing-Duistermaat (2026).
+lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis.
 R package version 0.1.0. https://github.com/heli-math/lomda
 ```
 
----
-
 ## Funding
 
-This work was supported by a STSM Grant from COST Action CA21169, supported by COST (European Cooperation in Science and Technology).
-
+This work was supported by a STSM Grant from COST Action CA21169, supported by
+COST (European Cooperation in Science and Technology).

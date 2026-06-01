@@ -16,15 +16,15 @@ Authors@R: c(
     )
   )
 Maintainer: He Li <he.li.math@outlook.com>
-Description: Implements a two-stage method for the analysis of longitudinal
+Description: Implements two-stage methods for the analysis of longitudinal
     omics data. Stage 1 applies Principal Component Analysis (PCA) to
     high-dimensional metabolomics (or other omics) measurements collected
-    at multiple visits. Stage 2 fits a Linear Mixed Model (LMM) with a
-    random intercept to the PC scores from Stage 1, enabling inference on
-    time-related trajectories. The package provides estimation, likelihood
-    ratio tests, and Wald tests for the time-effect slope, along with
-    simulated example data and downstream visualization utilities
-    (e.g. PC score plots, loadings, trajectory plots).
+    repeatedly over time. Stage 2 models the estimated PC scores using either
+    a Linear Mixed Model (LMM) with a subject-specific random intercept over
+    visit, or Functional Data Analysis (FDA) for smooth age-indexed
+    trajectories. The package provides estimation, inference for visit effects,
+    age-trajectory prediction, important-feature ranking, simulated example
+    data, and downstream visualization utilities.
 License: GPL-3
 URL: https://github.com/heli-math/lomda
 BugReports: https://github.com/heli-math/lomda/issues

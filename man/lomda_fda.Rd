@@ -47,11 +47,12 @@ An object of class \code{"lomda_fda"} containing PCA results,
   PC-score data, FDA fits for each PC, the age grid, and the matched call.
 }
 \description{
-Fits a PCA plus FDA workflow for longitudinal omics data. Stage 1 applies
-PCA to the omics block, as in \code{\link{lomda}}. Stage 2 smooths each
-selected PC score as a function of age, producing age-specific mean PC
-trajectories that can be plotted, predicted, and mapped back to important
-metabolites through the PCA loadings.
+Lower-level PCA plus FDA workflow for longitudinal omics data. Most users
+can call \code{lomda(..., time = "age")} instead. Stage 1 applies PCA to
+the omics block, as in \code{\link{lomda}}. Stage 2 smooths each selected
+PC score as a function of age, producing age-specific mean PC trajectories
+that can be plotted, predicted, and mapped back to important metabolites
+through the PCA loadings.
 }
 \details{
 When \pkg{face} is installed and \code{method = "auto"} or

@@ -30,6 +30,9 @@
 lomda_lrt <- function(x) {
   if (!inherits(x, "lomda"))
     stop("x must be a 'lomda' object.")
+  if (!is.null(x$stage2) && !identical(x$stage2, "lmm"))
+    stop("lomda_lrt() is available for lomda(..., time = 'visit') PCA+LMM ",
+         "fits only.")
 
   results <- lapply(names(x$fit_lmm), function(pc) {
     ll_full <- as.numeric(logLik(x$fit_lmm[[pc]]))
@@ -91,6 +94,11 @@ lomda_lrt <- function(x) {
 lomda_wald <- function(x, use_t = TRUE) {
   if (!inherits(x, "lomda"))
     stop("x must be a 'lomda' object.")
+  if (!is.null(x$stage2) && !identical(x$stage2, "lmm"))
+    stop("lomda_wald() is available for lomda(..., time = 'visit') PCA+LMM ",
+         "fits only.")
+
+  time_col <- x$time_col %||% "visit"
 
   results <- lapply(names(x$fit_lmm), function(pc) {
     fit <- x$fit_lmm[[pc]]
@@ -98,7 +106,7 @@ lomda_wald <- function(x, use_t = TRUE) {
     if (use_t) {
       # lmerTest provides Satterthwaite df + t-stat + p-value in coef(summary())
       cs      <- as.data.frame(coef(summary(fit)))
-      time_row <- cs["visit", , drop = FALSE]
+      time_row <- cs[time_col, , drop = FALSE]
       beta1   <- time_row[1, "Estimate"]
       se      <- time_row[1, "Std. Error"]
       t_stat  <- time_row[1, "t value"]
@@ -111,8 +119,8 @@ lomda_wald <- function(x, use_t = TRUE) {
     } else {
       # z-test (large-sample)
       cs      <- as.data.frame(coef(summary(fit)))
-      beta1   <- cs["visit", "Estimate"]
-      se      <- cs["visit", "Std. Error"]
+      beta1   <- cs[time_col, "Estimate"]
+      se      <- cs[time_col, "Std. Error"]
       z_stat  <- beta1 / se
       pval    <- 2 * pnorm(-abs(z_stat))
       df_sw   <- NA_real_

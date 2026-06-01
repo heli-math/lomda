@@ -1,74 +1,67 @@
 #' lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis
 #'
 #' @description
-#' The \pkg{lomda} package implements a two-stage statistical pipeline for
-#' analysing high-dimensional longitudinal omics data (e.g. metabolomics,
-#' proteomics, transcriptomics measured at repeated visits).
+#' The \pkg{lomda} package implements two-stage statistical workflows for
+#' high-dimensional longitudinal omics data.
 #'
-#' \strong{Stage 1 — PCA:}
-#' Principal Component Analysis is applied to the omics matrix (all subjects
-#' and all visits pooled). The top \eqn{r} PCs summarise the dominant axes of
-#' variation in the data while drastically reducing dimensionality.
+#' \strong{Stage 1 -- PCA:}
+#' Principal Component Analysis is applied to the omics matrix with all subjects
+#' and visits pooled. The top PCs summarize the dominant axes of molecular
+#' variation.
 #'
-#' \strong{Stage 2 — LMM:}
-#' For each PC, a Linear Mixed Model with a subject-specific random intercept
-#' is fitted:
-#' \deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
-#' The time-effect slope \eqn{\hat{\beta}_1} and its uncertainty are the
-#' primary inferential targets.
+#' \strong{Stage 2a -- LMM over visit:}
+#' When \code{time = "visit"}, the estimated PC scores are modelled with
+#' Linear Mixed Models with subject-specific random intercepts. This workflow
+#' supports visit-effect inference through \code{\link{lomda_lrt}} and
+#' \code{\link{lomda_wald}}.
+#'
+#' \strong{Stage 2b -- FDA over age:}
+#' When \code{time = "age"}, the estimated PC scores are smoothed over age
+#' using Functional Data Analysis. This workflow supports age-trajectory
+#' prediction and important-feature ranking.
 #'
 #' @section Key functions:
 #' \describe{
-#'   \item{\code{\link{lomda}}}{Fit the full two-stage model.}
+#'   \item{\code{\link{lomda}}}{Fit PCA+LMM with \code{time = "visit"} or
+#'     PCA+FDA with \code{time = "age"}.}
 #'   \item{\code{\link{lomda_pca}}}{Stage 1 only (PCA).}
-#'   \item{\code{\link{lomda_lmm}}}{Stage 2 only (LMM on provided scores).}
-#'   \item{\code{\link{lomda_fda}}}{Alternative Stage 2: smooth PC scores as
-#'     functions of age using FDA.}
-#'   \item{\code{\link{lomda_lrt}}}{Likelihood ratio test for time effect.}
-#'   \item{\code{\link{lomda_wald}}}{Wald test for time-effect slope.}
-#'   \item{\code{\link{plot.lomda}}}{Dispatch to score, loading, variance, or
-#'     trajectory plots.}
-#'   \item{\code{\link{plot_scores}}}{PC score scatter plot.}
-#'   \item{\code{\link{plot_loadings}}}{Feature loadings bar / biplot.}
-#'   \item{\code{\link{plot_trajectory}}}{Mean PC trajectory over time.}
-#'   \item{\code{\link{plot_variance_explained}}}{Scree plot.}
+#'   \item{\code{\link{lomda_lmm}}}{Lower-level LMM on provided PC scores.}
+#'   \item{\code{\link{lomda_fda}}}{Lower-level FDA on PCA scores.}
+#'   \item{\code{\link{lomda_lrt}}}{Likelihood ratio test for visit effects.}
+#'   \item{\code{\link{lomda_wald}}}{Wald test for visit-effect slope.}
 #'   \item{\code{\link{lomda_fda_important}}}{Rank metabolites contributing
 #'     to FDA-smoothed PCs.}
-#'   \item{\code{\link{plot_fda_trajectory}}}{Age-smoothed PC trajectories.}
+#'   \item{\code{\link{plot.lomda}}}{Score, loading, variance, or visit
+#'     trajectory plots for PCA+LMM fits.}
+#'   \item{\code{\link{plot.lomda_fda}}}{Age trajectory and importance plots
+#'     for PCA+FDA fits.}
 #'   \item{\code{\link{simulate_lomda_data}}}{Generate synthetic longitudinal
 #'     omics data.}
 #' }
 #'
 #' @section Data format:
-#' The input data frame must follow a specific layout:
+#' The input data frame must contain:
 #' \itemize{
-#'   \item Column 1: \code{ID} — subject identifier.
-#'   \item Column 2: \code{visit} -- visit number (integer; 1, 2, 3, ...).
-#'   \item Column 3: \code{age} (or any other covariate) — subject-level or
-#'     time-varying covariate.
-#'   \item Columns 4+: omics features (metabolites, proteins, ...).
+#'   \item \code{ID}: subject identifier.
+#'   \item \code{visit}: visit number.
+#'   \item \code{age}: subject age at that visit.
+#'   \item Omics feature columns, such as metabolites, proteins, or genes.
 #' }
 #'
 #' @section Getting started:
 #' \preformatted{
 #' library(lomda)
 #'
-#' # Simulate data
 #' dat <- simulate_lomda_data(n_subjects = 60, n_visits = 3,
 #'                            n_features = 50, seed = 42)
 #'
-#' # Fit the two-stage model
-#' fit <- lomda(dat, n_pc = 3, covariates = "age")
+#' fit_visit <- lomda(dat, n_pc = 3, time = "visit")
+#' lomda_lrt(fit_visit)
+#' lomda_wald(fit_visit)
 #'
-#' # Inference
-#' lomda_lrt(fit)
-#' lomda_wald(fit)
-#'
-#' # Plots
-#' plot(fit, type = "scores")
-#' plot(fit, type = "trajectory")
-#' plot(fit, type = "variance")
-#' plot(fit, type = "loadings")
+#' fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+#' predict(fit_age, ages = c(40, 50, 60))
+#' lomda_fda_important(fit_age, pc = 1)
 #' }
 #'
 #' @importFrom stats rnorm sd setNames
@@ -76,7 +69,7 @@
 #' @importFrom rlang .data
 #'
 #' @references
-#' Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting Linear
+#' Bates, D., Machler, M., Bolker, B., & Walker, S. (2015). Fitting Linear
 #' Mixed-Effects Models Using lme4. \emph{Journal of Statistical Software},
 #' 67(1), 1--48. \doi{10.18637/jss.v067.i01}
 #'

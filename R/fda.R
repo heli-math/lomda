@@ -1,10 +1,11 @@
 #' PCA plus Functional Data Analysis over age
 #'
-#' Fits a PCA plus FDA workflow for longitudinal omics data. Stage 1 applies
-#' PCA to the omics block, as in \code{\link{lomda}}. Stage 2 smooths each
-#' selected PC score as a function of age, producing age-specific mean PC
-#' trajectories that can be plotted, predicted, and mapped back to important
-#' metabolites through the PCA loadings.
+#' Lower-level PCA plus FDA workflow for longitudinal omics data. Most users
+#' can call \code{lomda(..., time = "age")} instead. Stage 1 applies PCA to
+#' the omics block, as in \code{\link{lomda}}. Stage 2 smooths each selected
+#' PC score as a function of age, producing age-specific mean PC trajectories
+#' that can be plotted, predicted, and mapped back to important metabolites
+#' through the PCA loadings.
 #'
 #' When \pkg{face} is installed and \code{method = "auto"} or
 #' \code{method = "face"}, \code{\link[face]{face.sparse}} is used. Otherwise
@@ -142,6 +143,37 @@ print.lomda_fda <- function(x, ...) {
   cat("  Grid points   :", length(x$age_grid), "\n\n")
   cat("Use predict(), lomda_fda_important(), plot_fda_trajectory(), or plot().\n")
   invisible(x)
+}
+
+#' Summary method for PCA plus FDA fits
+#'
+#' @param object A \code{lomda_fda} object.
+#' @param ... Ignored.
+#' @export
+summary.lomda_fda <- function(object, ...) {
+  cat("====================================================\n")
+  cat("  LOMDA-FDA Summary - age-smoothed PC trajectories\n")
+  cat("====================================================\n\n")
+  cat("Stage 1 - PCA\n")
+  ve <- round(object$var_explained * 100, 2)
+  cat("  Var. explained:", paste0(names(ve), " ", ve, "%", collapse = ", "), "\n\n")
+  cat("Stage 2 - FDA over ", object$age_col, "\n", sep = "")
+  cat("  Method      :", object$method, "\n")
+  cat("  Age range   :", paste(round(range(object$age_grid), 2), collapse = " to "), "\n")
+  cat("  Grid points :", length(object$age_grid), "\n\n")
+
+  curve_summary <- do.call(rbind, lapply(names(object$fda_fits), function(pc) {
+    curve <- object$fda_fits[[pc]]$mean_curve$mean
+    data.frame(
+      PC = pc,
+      min_mean = round(min(curve), 4),
+      max_mean = round(max(curve), 4),
+      range = round(diff(range(curve)), 4),
+      stringsAsFactors = FALSE
+    )
+  }))
+  print(curve_summary)
+  invisible(object)
 }
 
 #' Predict age-specific PC trajectories from a PCA plus FDA fit

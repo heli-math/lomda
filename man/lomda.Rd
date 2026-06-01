@@ -7,7 +7,10 @@
 lomda(
   data,
   n_pc = 3,
-  covariates = NULL,
+  time = c("visit", "age"),
+  adjust = NULL,
+  method_fda = NULL,
+  grid_length = 100,
   scale = FALSE,
   center = TRUE,
   REML = FALSE
@@ -15,16 +18,26 @@ lomda(
 }
 \arguments{
 \item{data}{A data frame with columns: \code{ID} (subject identifier),
-\code{visit} (visit; integer 1, 2, 3, ...), \code{age} (or other
-time-invariant covariates), and one column per omics feature. The omics
-columns must start from column 4 onward.}
+\code{visit} (visit; integer 1, 2, 3, ...), \code{age}, and one column per
+omics feature. The omics columns must start from column 4 onward.}
 
 \item{n_pc}{Integer. Number of PCs to extract and model in Stage 2.
 Defaults to \code{3}.}
 
-\item{covariates}{Character vector of additional covariate column names to
-include in the Stage 2 LMM (e.g., \code{c("age", "visit")}). Defaults to
-\code{"visit"}.}
+\item{time}{Character. Stage 2 time scale. Use \code{"visit"} for PCA+LMM
+or \code{"age"} for PCA+FDA.}
+
+\item{adjust}{Character vector of additional covariate column names to
+include in the Stage 2 LMM when \code{time = "visit"} (for example,
+\code{c("sex", "batch")}). These columns are excluded from the PCA omics
+block. Defaults to \code{NULL}.}
+
+\item{method_fda}{Character. FDA smoother used only when \code{time = "age"}.
+One of \code{"auto"}, \code{"face"}, or \code{"spline"}.
+Defaults to \code{NULL}, which uses \code{"auto"} for age analyses.}
+
+\item{grid_length}{Integer. Number of age-grid points for FDA curves when
+\code{time = "age"}. Defaults to \code{100}.}
 
 \item{scale}{Logical. Whether to scale the omics features to unit variance
 before PCA. Defaults to \code{TRUE}.}
@@ -40,39 +53,48 @@ An object of class \code{"lomda"} with the following components:
 \describe{
   \item{\code{fit_pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
   \item{\code{scores}}{Data frame of PC scores merged with metadata
-    (ID, visit, covariates).}
+    (ID, visit, age, and optional adjustment covariates).}
   \item{\code{var_explained}}{Named numeric vector of variance explained by each PC.}
   \item{\code{loadings}}{Matrix of PCA loadings (features x PCs).}
-  \item{\code{fit_lmm}}{Named list of \code{lmerMod} objects, one per PC.}
-  \item{\code{fit_lmm_null}}{Named list of null \code{lmerMod} objects
-    (time dropped) used for LRT.}
+  \item{\code{stage2}}{Either \code{"lmm"} or \code{"fda"}.}
+  \item{\code{fit_lmm}}{For \code{time = "visit"}, named list of
+    \code{lmerMod} objects, one per PC.}
+  \item{\code{fit_lmm_null}}{For \code{time = "visit"}, named list of null
+    \code{lmerMod} objects used for LRT.}
+  \item{\code{fda_fits}}{For \code{time = "age"}, named list of FDA fits.}
   \item{\code{n_pc}}{Number of PCs modelled.}
-  \item{\code{covariates}}{Covariate names used in Stage 2. Defaults to \code{"NULL"}.}
+  \item{\code{time}}{Time scale used in Stage 2.}
+  \item{\code{adjust}}{Adjustment covariates used in Stage 2 LMM.}
   \item{\code{omics_cols}}{Names of the omics feature columns used in PCA.}
   \item{\code{call}}{The matched call.}
 }
 }
 \description{
-Fits the two-stage \eqn{lomda} model to longitudinal omics data.
+Fits a two-stage \eqn{lomda} model to longitudinal omics data.
 
 \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
 proteins, etc.) pooled across all visits. The resulting PC scores capture
 the major axes of variation in the high-dimensional data.
 
-\strong{Stage 2}: For each selected PC, a Linear Mixed Model (LMM) with
-subject-specific random intercepts is fitted:
+\strong{Stage 2}: The PC scores are modelled using one of two workflows.
 
-\deqn{t_{ik} = \beta_0 + \beta_1 \cdot k + b_i + g_{ik}}
+If \code{time = "visit"}, each PC is analysed with a Linear Mixed Model
+(LMM) with subject-specific random intercepts:
 
-where \eqn{b_i \sim N(0, \Sigma_b)} is the random intercept and
-\eqn{g_{ik} \sim N(0, \Sigma_g)}.
+\deqn{t_{ijk} = \beta_{0k} + \beta_{1k} visit_{ij} + b_{ik} + e_{ijk}.}
+
+If \code{time = "age"}, each PC is smoothed as a function of age using
+Functional Data Analysis (FDA):
+
+\deqn{t_{ijk} = \mu_k(age_{ij}) + u_{ik}(age_{ij}) + e_{ijk}.}
 }
 \examples{
 dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,
                            seed = 42)
-fit <- lomda(dat, n_pc = 3, covariates = "visit")
-print(fit)
-summary(fit)
+fit_visit <- lomda(dat, n_pc = 3, time = "visit")
+fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+print(fit_visit)
+summary(fit_visit)
 
 }
 \seealso{

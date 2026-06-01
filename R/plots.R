@@ -280,6 +280,7 @@ plot_trajectory <- function(x, pcs = 1:3) {
     se_score   = sd(.data$score) / sqrt(dplyr::n()),
     .groups    = "drop"
   )
+  visit_breaks <- sort(unique(long$visit))
 
   ggplot2::ggplot() +
     # Individual trajectories
@@ -313,6 +314,7 @@ plot_trajectory <- function(x, pcs = 1:3) {
       linetype = "dashed", color = "#2166ac", linewidth = 0.7
     ) +
     ggplot2::facet_wrap(~ .data$PC, scales = "free_y") +
+    ggplot2::scale_x_continuous(breaks = visit_breaks) +
     ggplot2::labs(
       x = "Visit", y = "PC Score",
       title = "PC Score Trajectory Over Time",
