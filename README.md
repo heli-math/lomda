@@ -61,11 +61,12 @@ fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
 summary(fit_age)
 
 predict(fit_age, ages = c(35, 45, 55, 65))
-lomda_fda_important(fit_age, pc = 1, n_top = 10)
+lomda_important(fit_age, n_top = 10)
 
-plot_fda_trajectory(fit_age, pc = 1)
-plot_fda_importance(fit_age, pc = 1)
-plot(fit_age, type = "all", pc = 1, pause = TRUE)
+plot(fit_age, type = "variance")
+plot_fda_trajectory(fit_age, pcs = 1:3, n_subjects = 50)
+plot_fda_importance(fit_age)
+plot(fit_age, type = "all", pcs = 1:3, n_subjects = 50, pause = TRUE)
 ```
 
 ## Choosing the Stage 2 Model
@@ -95,7 +96,8 @@ for backward-compatible scripts.
 
 ## Data Format
 
-The input data frame should have this layout:
+The input data frame should have one row per subject-visit observation. By
+default, LOMDA expects these metadata columns:
 
 | Column | Name | Description |
 |--------|------|-------------|
@@ -105,6 +107,18 @@ The input data frame should have this layout:
 | 4+ | omics features | Metabolites, proteins, genes, or other omics variables |
 
 One row is one subject-visit observation.
+
+If your dataset uses different names, pass them to `lomda()`:
+
+```r
+fit <- lomda(
+  dat,
+  ID = "subject_id",
+  visit = "wave",
+  age = "age_years",
+  time = "visit"
+)
+```
 
 ## Statistical Model
 
@@ -138,7 +152,7 @@ Use:
 ```r
 predict(fit_age, ages = c(40, 50, 60))
 predict(fit_age, newdata = dat[1:5, ], type = "deviation")
-lomda_fda_important(fit_age, pc = 1)
+lomda_important(fit_age)
 ```
 
 ## Downstream Plots
@@ -151,6 +165,12 @@ lomda_fda_important(fit_age, pc = 1)
 | `plot_variance_explained()` | Scree plot |
 | `plot_fda_trajectory()` | Age-smoothed PC score trajectory |
 | `plot_fda_importance()` | Important features for an FDA-smoothed PC |
+
+For large age-indexed datasets, limit the number of drawn participants:
+
+```r
+plot_fda_trajectory(fit_age, pcs = 1:3, n_subjects = 100)
+```
 
 All plot functions return `ggplot2` objects and can be customized.
 

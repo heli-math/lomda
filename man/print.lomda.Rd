@@ -14,3 +14,9 @@
 \description{
 Print method for lomda objects
 }
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
+fit <- lomda(dat, n_pc = 2, time = "visit")
+print(fit)
+
+}

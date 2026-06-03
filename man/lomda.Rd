@@ -6,6 +6,9 @@
 \usage{
 lomda(
   data,
+  ID = "ID",
+  visit = "visit",
+  age = "age",
   n_pc = 3,
   time = c("visit", "age"),
   adjust = NULL,
@@ -17,9 +20,16 @@ lomda(
 )
 }
 \arguments{
-\item{data}{A data frame with columns: \code{ID} (subject identifier),
-\code{visit} (visit; integer 1, 2, 3, ...), \code{age}, and one column per
-omics feature. The omics columns must start from column 4 onward.}
+\item{data}{A data frame with one row per subject-visit observation.}
+
+\item{ID}{Character. Name of the subject identifier column. Defaults to
+\code{"ID"}.}
+
+\item{visit}{Character. Name of the visit/time-index column used by the
+PCA+LMM workflow. Defaults to \code{"visit"}.}
+
+\item{age}{Character. Name of the age column used by the PCA+FDA workflow.
+Defaults to \code{"age"}.}
 
 \item{n_pc}{Integer. Number of PCs to extract and model in Stage 2.
 Defaults to \code{3}.}
@@ -53,7 +63,8 @@ An object of class \code{"lomda"} with the following components:
 \describe{
   \item{\code{fit_pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
   \item{\code{scores}}{Data frame of PC scores merged with metadata
-    (ID, visit, age, and optional adjustment covariates).}
+    (ID, visit, age, and optional adjustment covariates, using the column
+    names supplied by the user).}
   \item{\code{var_explained}}{Named numeric vector of variance explained by each PC.}
   \item{\code{loadings}}{Matrix of PCA loadings (features x PCs).}
   \item{\code{stage2}}{Either \code{"lmm"} or \code{"fda"}.}
@@ -93,6 +104,10 @@ dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,
                            seed = 42)
 fit_visit <- lomda(dat, n_pc = 3, time = "visit")
 fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+
+names(dat)[1:3] <- c("subject_id", "wave", "age_years")
+fit_custom <- lomda(dat, ID = "subject_id", visit = "wave",
+                    age = "age_years", time = "visit")
 print(fit_visit)
 summary(fit_visit)
 

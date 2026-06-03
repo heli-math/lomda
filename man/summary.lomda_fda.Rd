@@ -14,3 +14,9 @@
 \description{
 Summary method for PCA plus FDA fits
 }
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 2)
+fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+summary(fit)
+
+}

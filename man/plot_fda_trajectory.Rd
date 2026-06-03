@@ -4,14 +4,32 @@
 \alias{plot_fda_trajectory}
 \title{Plot FDA-smoothed PC trajectory over age}
 \usage{
-plot_fda_trajectory(x, pc = 1, show_subjects = TRUE, color_by = NULL)
+plot_fda_trajectory(
+  x,
+  pc = 1,
+  pcs = NULL,
+  show_subjects = TRUE,
+  n_subjects = NULL,
+  subject_ids = NULL,
+  color_by = NULL
+)
 }
 \arguments{
 \item{x}{A \code{lomda_fda} object.}
 
-\item{pc}{Integer. PC to plot.}
+\item{pc}{Integer vector. PCs to plot. Defaults to \code{1}. The newer
+\code{pcs} argument can also be used.}
+
+\item{pcs}{Integer vector. PCs to plot. If supplied, overrides \code{pc}.}
 
 \item{show_subjects}{Logical. Show individual subject trajectories.}
+
+\item{n_subjects}{Integer or \code{NULL}. Maximum number of subjects to
+draw. Defaults to \code{NULL}, meaning all subjects. Use a smaller number
+for large datasets.}
+
+\item{subject_ids}{Optional vector of subject IDs to draw. Overrides
+\code{n_subjects}.}
 
 \item{color_by}{Optional score-data column used to colour observed points.
 Defaults to \code{NULL}, which draws points in a single colour.}
@@ -21,4 +39,10 @@ A \code{ggplot2} object.
 }
 \description{
 Plot FDA-smoothed PC trajectory over age
+}
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 4)
+fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+plot_fda_trajectory(fit, pcs = 1:2, n_subjects = 5)
+
 }

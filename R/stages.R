@@ -6,6 +6,9 @@
 #'
 #' @param data A data frame formatted as described in \code{\link{lomda}}.
 #' @param n_pc Integer. Number of principal components to extract.
+#' @param id_col Character. Name of the subject identifier column.
+#' @param visit_col Character. Name of the visit column.
+#' @param age_col Character. Name of the age column.
 #' @param scale Logical. Scale features to unit variance? Default \code{TRUE}.
 #' @param center Logical. Center features? Default \code{TRUE}.
 #'
@@ -26,10 +29,17 @@
 #' @export
 lomda_pca <- function(data,
                       n_pc       = 3,
+                      id_col     = "ID",
+                      visit_col  = "visit",
+                      age_col    = "age",
                       scale      = TRUE,
                       center     = TRUE) {
 
-  meta_cols  <- c("ID", "visit", "age")
+  meta_cols  <- c(id_col, visit_col, age_col)
+  missing_cols <- setdiff(meta_cols, names(data))
+  if (length(missing_cols) > 0)
+    stop("data must contain columns: ", paste(missing_cols, collapse = ", "))
+
   omics_cols <- setdiff(names(data), meta_cols)
 
   if (length(omics_cols) < 2)
@@ -73,6 +83,8 @@ lomda_pca <- function(data,
 #' @param n_pc Integer. Number of PC columns to model.
 #' @param time_col Character. Time variable used as the fixed effect in the
 #'   LMM. Defaults to \code{"visit"}.
+#' @param id_col Character. Subject identifier column used for the random
+#'   intercept. Defaults to \code{"ID"}.
 #' @param adjust Character vector of additional fixed-effect covariates.
 #'   Defaults to \code{NULL}.
 #' @param REML Logical. Use REML? Default \code{FALSE} (required for LRT).
@@ -96,6 +108,7 @@ lomda_pca <- function(data,
 lomda_lmm <- function(scores_df,
                       n_pc       = 3,
                       time_col   = "visit",
+                      id_col     = "ID",
                       adjust     = NULL,
                       REML       = FALSE) {
   pc_names <- paste0("PC", seq_len(n_pc))
@@ -105,27 +118,32 @@ lomda_lmm <- function(scores_df,
 
   if (!time_col %in% names(scores_df))
     stop(time_col, " not found in score data frame.")
+  if (!id_col %in% names(scores_df))
+    stop(id_col, " not found in score data frame.")
 
   if (length(adjust) > 0 && !all(adjust %in% names(scores_df))) {
     stop("Some adjustment covariates were not found in score data: ",
          paste(setdiff(adjust, names(scores_df)), collapse = ", "))
   }
 
-  cov_str   <- if (length(adjust) > 0) paste(adjust, collapse = " + ")
+  cov_str   <- if (length(adjust) > 0)
+                 paste(vapply(adjust, .lomda_bt, character(1)), collapse = " + ")
                else NULL
-  fixed_rhs <- if (!is.null(cov_str)) paste(time_col, "+", cov_str) else time_col
+  time_term <- .lomda_bt(time_col)
+  fixed_rhs <- if (!is.null(cov_str)) paste(time_term, "+", cov_str) else time_term
   null_rhs  <- if (!is.null(cov_str)) cov_str else "1"
+  random_rhs <- paste0("(1|", .lomda_bt(id_col), ")")
 
   fits      <- vector("list", n_pc); names(fits)      <- pc_names
   null_fits <- vector("list", n_pc); names(null_fits) <- pc_names
 
   for (pc in pc_names) {
     fits[[pc]] <- suppressMessages(
-      lmerTest::lmer(as.formula(paste0(pc, " ~ ", fixed_rhs, " + (1|ID)")),
+      lmerTest::lmer(as.formula(paste0(pc, " ~ ", fixed_rhs, " + ", random_rhs)),
                      data = scores_df, REML = REML)
     )
     null_fits[[pc]] <- suppressMessages(
-      lmerTest::lmer(as.formula(paste0(pc, " ~ ", null_rhs, " + (1|ID)")),
+      lmerTest::lmer(as.formula(paste0(pc, " ~ ", null_rhs, " + ", random_rhs)),
                      data = scores_df, REML = REML)
     )
   }

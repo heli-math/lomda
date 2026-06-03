@@ -26,8 +26,8 @@ NULL
 #' @return A \code{ggplot} object or list of \code{ggplot} objects (invisibly).
 #'
 #' @examples
-#' dat <- simulate_lomda_data(seed = 42)
-#' fit <- lomda(dat, n_pc = 3)
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 42)
+#' fit <- lomda(dat, n_pc = 2)
 #' plot(fit, type = "scores")
 #' plot(fit, type = "variance")
 #' plot(fit, type = "loadings")
@@ -46,9 +46,14 @@ plot.lomda <- function(x, type = "all",
   type <- match.arg(type, valid_types, several.ok = TRUE)
 
   plots <- lapply(type, function(one_type) {
+    plot_color_by <- color_by
+    if (identical(plot_color_by, "visit") && inherits(x, "lomda") &&
+        !plot_color_by %in% names(x$scores)) {
+      plot_color_by <- x$time_col %||% x$visit_col %||% "visit"
+    }
     p <- switch(one_type,
       scores     = plot_scores(x,     pc_x = pc_x, pc_y = pc_y,
-                               color_by = color_by, ...),
+                               color_by = plot_color_by, ...),
       loadings   = plot_loadings(x,   pc_x = pc_x, pc_y = pc_y,
                                  n_top = n_top, ...),
       variance   = plot_variance_explained(x, ...),
@@ -81,10 +86,10 @@ plot.lomda <- function(x, type = "all",
 #' @return A \code{ggplot2} object.
 #'
 #' @examples
-#' dat <- simulate_lomda_data(seed = 1)
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
 #' fit <- lomda(dat)
 #' plot_scores(fit)
-#' plot_scores(fit, pc_x = 1, pc_y = 3, color_by = "age")
+#' plot_scores(fit, pc_x = 1, pc_y = 2, color_by = "age")
 #'
 #' @importFrom ggplot2 ggplot aes geom_point labs theme_bw scale_color_brewer
 #'   scale_color_manual theme element_text
@@ -98,6 +103,11 @@ plot_scores <- function(x,
 
   scores_df <- if (inherits(x, "lomda")) x$scores else x
   var_exp   <- if (inherits(x, "lomda")) x$var_explained else NULL
+  id_col <- if (inherits(x, "lomda")) x$id_col %||% "ID" else "ID"
+  if (identical(color_by, "visit") && inherits(x, "lomda") &&
+      !color_by %in% names(scores_df)) {
+    color_by <- x$time_col %||% x$visit_col %||% "visit"
+  }
 
   xvar <- paste0("PC", pc_x)
   yvar <- paste0("PC", pc_y)
@@ -138,9 +148,9 @@ plot_scores <- function(x,
     p <- p + ggplot2::scale_color_brewer(palette = "Set2")
   }
 
-  if (label_ids && "ID" %in% names(scores_df)) {
+  if (label_ids && id_col %in% names(scores_df)) {
     p <- p + ggrepel::geom_text_repel(
-      ggplot2::aes(label = .data[["ID"]]),
+      ggplot2::aes(label = .data[[id_col]]),
       size = 2.5, max.overlaps = 20
     )
   }
@@ -162,8 +172,8 @@ plot_scores <- function(x,
 #' @return A \code{ggplot2} object.
 #'
 #' @examples
-#' dat <- simulate_lomda_data(seed = 5)
-#' fit <- lomda(dat, n_pc = 3)
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 5)
+#' fit <- lomda(dat, n_pc = 2)
 #' plot_loadings(fit)
 #' plot_loadings(fit, pc_x = 1, pc_y = NULL)
 #'
@@ -247,8 +257,8 @@ plot_loadings <- function(x, pc_x = 1L, pc_y = 2L, n_top = 10L) {
 #' @return A \code{ggplot2} object.
 #'
 #' @examples
-#' dat <- simulate_lomda_data(seed = 10)
-#' fit <- lomda(dat, n_pc = 3)
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 10)
+#' fit <- lomda(dat, n_pc = 2)
 #' plot_trajectory(fit)
 #'
 #' @importFrom ggplot2 ggplot aes geom_line geom_point labs theme_bw facet_wrap
@@ -264,59 +274,66 @@ plot_trajectory <- function(x, pcs = 1:3) {
     stop("None of the requested PCs exist in the model.")
 
   scores_df <- x$scores
+  id_col <- x$id_col %||% "ID"
+  time_col <- x$time_col %||% x$visit_col %||% "visit"
 
   long <- tidyr::pivot_longer(
-    scores_df[, c("ID", "visit", pc_names)],
+    scores_df[, c(id_col, time_col, pc_names)],
     cols      = dplyr::all_of(pc_names),
     names_to  = "PC",
     values_to = "score"
   )
-  long$visit <- as.integer(long$visit)
+  long$.lomda_time <- long[[time_col]]
 
   # Mean +- SE per time point per PC
-  summ <- dplyr::group_by(long, .data$PC, .data$visit)
+  summ <- dplyr::group_by(long, .data$PC, .data$.lomda_time)
   summ <- dplyr::summarise(summ,
     mean_score = mean(.data$score),
     se_score   = sd(.data$score) / sqrt(dplyr::n()),
     .groups    = "drop"
   )
-  visit_breaks <- sort(unique(long$visit))
+  visit_breaks <- sort(unique(long$.lomda_time))
+  x_scale <- if (is.numeric(long$.lomda_time)) {
+    ggplot2::scale_x_continuous(breaks = visit_breaks)
+  } else {
+    NULL
+  }
 
   ggplot2::ggplot() +
     # Individual trajectories
     ggplot2::geom_line(
       data = long,
-      ggplot2::aes(x = .data$visit, y = .data$score,
-                   group = .data$ID),
+      ggplot2::aes(x = .data$.lomda_time, y = .data$score,
+                   group = .data[[id_col]]),
       color = "grey75", linewidth = 0.35, alpha = 0.6
     ) +
     # Mean trajectory
     ggplot2::geom_line(
       data = summ,
-      ggplot2::aes(x = .data$visit, y = .data$mean_score),
+      ggplot2::aes(x = .data$.lomda_time, y = .data$mean_score),
       color = "#2166ac", linewidth = 1.2
     ) +
     ggplot2::geom_point(
       data = summ,
-      ggplot2::aes(x = .data$visit, y = .data$mean_score),
+      ggplot2::aes(x = .data$.lomda_time, y = .data$mean_score),
       color = "#2166ac", size = 3
     ) +
     ggplot2::geom_line(
       data = summ,
-      ggplot2::aes(x = .data$visit,
+      ggplot2::aes(x = .data$.lomda_time,
                    y = .data$mean_score + 1.96 * .data$se_score),
       linetype = "dashed", color = "#2166ac", linewidth = 0.7
     ) +
     ggplot2::geom_line(
       data = summ,
-      ggplot2::aes(x = .data$visit,
+      ggplot2::aes(x = .data$.lomda_time,
                    y = .data$mean_score - 1.96 * .data$se_score),
       linetype = "dashed", color = "#2166ac", linewidth = 0.7
     ) +
     ggplot2::facet_wrap(~ .data$PC, scales = "free_y") +
-    ggplot2::scale_x_continuous(breaks = visit_breaks) +
+    x_scale +
     ggplot2::labs(
-      x = "Visit", y = "PC Score",
+      x = time_col, y = "PC Score",
       title = "PC Score Trajectory Over Time",
       subtitle = "Blue = group mean +- 95% CI; grey = individual trajectories"
     ) +
@@ -336,8 +353,8 @@ plot_trajectory <- function(x, pcs = 1:3) {
 #' @return A \code{ggplot2} object.
 #'
 #' @examples
-#' dat <- simulate_lomda_data(seed = 3)
-#' fit <- lomda(dat, n_pc = 5)
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 3)
+#' fit <- lomda(dat, n_pc = 2)
 #' plot_variance_explained(fit)
 #'
 #' @importFrom ggplot2 ggplot aes geom_col geom_line geom_point labs theme_bw
@@ -357,6 +374,12 @@ plot_variance_explained <- function(x, max_pc = NULL) {
     cum_var  = cum_ve
   )
   df$is_modelled <- df$PC <= x$n_pc
+
+  stage_label <- if (inherits(x, "lomda_fda") || identical(x$stage2, "fda")) {
+    "PCs used in Stage 2 FDA"
+  } else {
+    "PCs used in Stage 2 LMM"
+  }
 
   ggplot2::ggplot(df, ggplot2::aes(x = .data$PC)) +
     ggplot2::geom_col(
@@ -380,7 +403,7 @@ plot_variance_explained <- function(x, max_pc = NULL) {
       x     = "Principal Component",
       y     = "Proportion of Variance",
       title = "Variance Explained by PCA",
-      subtitle = "Red line = cumulative; blue bars = PCs used in Stage 2 LMM"
+      subtitle = paste("Red line = cumulative; blue bars =", stage_label)
     ) +
     .lomda_theme()
 }

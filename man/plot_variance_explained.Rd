@@ -20,8 +20,8 @@ Displays the proportion (and cumulative proportion) of variance explained
 by each PC extracted in Stage 1.
 }
 \examples{
-dat <- simulate_lomda_data(seed = 3)
-fit <- lomda(dat, n_pc = 5)
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 3)
+fit <- lomda(dat, n_pc = 2)
 plot_variance_explained(fit)
 
 }

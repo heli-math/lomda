@@ -9,6 +9,7 @@ lomda_fda(
   n_pc = 3,
   age_col = "age",
   id_col = "ID",
+  visit_col = "visit",
   method = c("auto", "face", "spline"),
   grid_length = 100,
   scale = FALSE,
@@ -27,6 +28,9 @@ Ignored when \code{x} is a \code{lomda} object.}
 argument. Defaults to \code{"age"}.}
 
 \item{id_col}{Character. Subject identifier column. Defaults to \code{"ID"}.}
+
+\item{visit_col}{Character. Visit column retained in score and prediction
+output when present. Defaults to \code{"visit"}.}
 
 \item{method}{Character. One of \code{"auto"}, \code{"face"}, or
 \code{"spline"}. Defaults to \code{"auto"}.}
@@ -61,9 +65,9 @@ When \pkg{face} is installed and \code{method = "auto"} or
 the observed PC scores.
 }
 \examples{
-dat <- simulate_lomda_data(n_subjects = 40, n_visits = 3,
-                           n_features = 20, seed = 42)
-fda <- lomda_fda(dat, n_pc = 3, method = "spline")
+dat <- simulate_lomda_data(n_subjects = 10, n_visits = 3,
+                           n_features = 8, seed = 42)
+fda <- lomda_fda(dat, n_pc = 2, method = "spline")
 predict(fda, ages = c(40, 50, 60))
 lomda_fda_important(fda, pc = 1, n_top = 5)
 plot_fda_trajectory(fda, pc = 1)

@@ -19,9 +19,13 @@
 #'
 #' \deqn{t_{ijk} = \mu_k(age_{ij}) + u_{ik}(age_{ij}) + e_{ijk}.}
 #'
-#' @param data A data frame with columns: \code{ID} (subject identifier),
-#'   \code{visit} (visit; integer 1, 2, 3, ...), \code{age}, and one column per
-#'   omics feature. The omics columns must start from column 4 onward.
+#' @param data A data frame with one row per subject-visit observation.
+#' @param ID Character. Name of the subject identifier column. Defaults to
+#'   \code{"ID"}.
+#' @param visit Character. Name of the visit/time-index column used by the
+#'   PCA+LMM workflow. Defaults to \code{"visit"}.
+#' @param age Character. Name of the age column used by the PCA+FDA workflow.
+#'   Defaults to \code{"age"}.
 #' @param n_pc Integer. Number of PCs to extract and model in Stage 2.
 #'   Defaults to \code{3}.
 #' @param time Character. Stage 2 time scale. Use \code{"visit"} for PCA+LMM
@@ -46,7 +50,8 @@
 #' \describe{
 #'   \item{\code{fit_pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
 #'   \item{\code{scores}}{Data frame of PC scores merged with metadata
-#'     (ID, visit, age, and optional adjustment covariates).}
+#'     (ID, visit, age, and optional adjustment covariates, using the column
+#'     names supplied by the user).}
 #'   \item{\code{var_explained}}{Named numeric vector of variance explained by each PC.}
 #'   \item{\code{loadings}}{Matrix of PCA loadings (features x PCs).}
 #'   \item{\code{stage2}}{Either \code{"lmm"} or \code{"fda"}.}
@@ -67,6 +72,10 @@
 #'                            seed = 42)
 #' fit_visit <- lomda(dat, n_pc = 3, time = "visit")
 #' fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+#'
+#' names(dat)[1:3] <- c("subject_id", "wave", "age_years")
+#' fit_custom <- lomda(dat, ID = "subject_id", visit = "wave",
+#'                     age = "age_years", time = "visit")
 #' print(fit_visit)
 #' summary(fit_visit)
 #'
@@ -77,6 +86,9 @@
 #' @importFrom stats prcomp
 #' @export
 lomda <- function(data,
+                  ID        = "ID",
+                  visit     = "visit",
+                  age       = "age",
                   n_pc      = 3,
                   time      = c("visit", "age"),
                   adjust    = NULL,
@@ -88,9 +100,12 @@ lomda <- function(data,
 
   cl <- match.call()
   time <- match.arg(time)
+  id_col <- .lomda_col_arg(substitute(ID), ID, "ID")
+  visit_col <- .lomda_col_arg(substitute(visit), visit, "visit")
+  age_col <- .lomda_col_arg(substitute(age), age, "age")
 
   ## ---- Input checks --------------------------------------------------------
-  required_cols <- c("ID", "visit", "age")
+  required_cols <- c(id_col, visit_col, age_col)
   missing_cols  <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0)
     stop("data must contain columns: ", paste(missing_cols, collapse = ", "))
@@ -100,7 +115,7 @@ lomda <- function(data,
          paste(setdiff(adjust, names(data)), collapse = ", "))
   }
 
-  meta_cols <- c("ID", "visit", "age")
+  meta_cols <- c(id_col, visit_col, age_col)
   adjust_extra <- setdiff(adjust, meta_cols)
   omics_cols <- setdiff(names(data), c(meta_cols, adjust_extra))
   pca_data <- data[, c(meta_cols, omics_cols), drop = FALSE]
@@ -124,7 +139,9 @@ lomda <- function(data,
     out <- lomda_fda(
       pca_data,
       n_pc = n_pc,
-      age_col = "age",
+      age_col = age_col,
+      id_col = id_col,
+      visit_col = visit_col,
       method = method_fda,
       grid_length = grid_length,
       scale = scale,
@@ -132,7 +149,7 @@ lomda <- function(data,
     )
     out$call <- cl
     out$time <- time
-    out$time_col <- "age"
+    out$time_col <- age_col
     out$stage2 <- "fda"
     out$adjust <- NULL
     class(out) <- c("lomda_fda", "lomda")
@@ -146,7 +163,9 @@ lomda <- function(data,
 
   ## ---- Stage 1: PCA --------------------------------------------------------
   message("Stage 1: PCA on ", length(omics_cols), " features...")
-  fit_pca <- lomda_pca(pca_data, n_pc = n_pc, scale = scale, center = center)
+  fit_pca <- lomda_pca(pca_data, n_pc = n_pc, id_col = id_col,
+                       visit_col = visit_col, age_col = age_col,
+                       scale = scale, center = center)
   scores_df <- fit_pca$scores
   if (length(adjust_extra) > 0) {
     scores_df <- cbind(scores_df, data[, adjust_extra, drop = FALSE])
@@ -154,8 +173,8 @@ lomda <- function(data,
 
   ## ---- Stage 2: LMM --------------------------------------------------------
   message("Stage 2: LMM for each of ", n_pc, " PCs...")
-  fit_lmm <- lomda_lmm(scores_df, n_pc = n_pc, time_col = "visit",
-                       adjust = adjust, REML = REML)
+  fit_lmm <- lomda_lmm(scores_df, n_pc = n_pc, time_col = visit_col,
+                       id_col = id_col, adjust = adjust, REML = REML)
 
   ## ---- Return --------------------------------------------------------------
   structure(
@@ -168,7 +187,10 @@ lomda <- function(data,
       fit_lmm_null  = fit_lmm$null_fits,
       stage2        = "lmm",
       time          = time,
-      time_col      = "visit",
+      time_col      = visit_col,
+      id_col        = id_col,
+      visit_col     = visit_col,
+      age_col       = age_col,
       n_pc          = n_pc,
       adjust        = adjust,
       omics_cols    = omics_cols,
@@ -183,6 +205,12 @@ lomda <- function(data,
 #'
 #' @param x A \code{lomda} object.
 #' @param ... Ignored.
+#'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
+#' fit <- lomda(dat, n_pc = 2, time = "visit")
+#' print(fit)
+#'
 #' @export
 print.lomda <- function(x, ...) {
   cat("====================================================\n")
@@ -196,12 +224,13 @@ print.lomda <- function(x, ...) {
   cat("  Var. explained:", paste0(names(ve), " ", ve, "%", collapse = ", "), "\n\n")
   cat("Stage 2 - LMM over visit (random intercept)\n")
   if (length(x$adjust) == 0) {
-    cat("  Formula : PC ~ visit + (1 | ID)\n")
+    cat("  Formula : PC ~ ", x$time_col %||% "visit",
+        " + (1 | ", x$id_col %||% "ID", ")\n", sep = "")
   } else {
     cat("  Adjusted for :", paste(x$adjust, collapse = ", "), "\n")
   }
   cat("  N obs.  :", nrow(x$scores), "\n")
-  cat("  N subj. :", length(unique(x$scores$ID)), "\n\n")
+  cat("  N subj. :", length(unique(x$scores[[x$id_col %||% "ID"]])), "\n\n")
   cat("Use summary(), lomda_lrt(), lomda_wald(), or plot() for results.\n")
   invisible(x)
 }
@@ -214,6 +243,12 @@ print.lomda <- function(x, ...) {
 #'
 #' @param object A \code{lomda} object.
 #' @param ... Ignored.
+#'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 2)
+#' fit <- lomda(dat, n_pc = 2, time = "visit")
+#' summary(fit)
+#'
 #' @export
 summary.lomda <- function(object, ...) {
   if (!is.null(object$stage2) && !identical(object$stage2, "lmm"))

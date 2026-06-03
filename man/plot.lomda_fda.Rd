@@ -4,15 +4,28 @@
 \alias{plot.lomda_fda}
 \title{Plot method for PCA plus FDA objects}
 \usage{
-\method{plot}{lomda_fda}(x, type = "all", pc = 1, pause = interactive(), ...)
+\method{plot}{lomda_fda}(
+  x,
+  type = "all",
+  pc = 1,
+  pcs = NULL,
+  n_subjects = NULL,
+  pause = interactive(),
+  ...
+)
 }
 \arguments{
 \item{x}{A \code{lomda_fda} object.}
 
-\item{type}{Character. One of \code{"trajectory"}, \code{"importance"}, or
-\code{"all"}. Defaults to \code{"all"}.}
+\item{type}{Character. One of \code{"variance"}, \code{"trajectory"},
+\code{"importance"}, or \code{"all"}. Defaults to \code{"all"}.}
 
-\item{pc}{Integer. PC to plot.}
+\item{pc}{Integer vector. PCs to plot. Defaults to \code{1}.}
+
+\item{pcs}{Integer vector. PCs to plot. If supplied, overrides \code{pc}.}
+
+\item{n_subjects}{Integer or \code{NULL}. Maximum number of subjects to
+draw in trajectory plots. Defaults to all subjects.}
 
 \item{pause}{Logical. If \code{TRUE}, wait for Return between plots when
 multiple plots are requested.}
@@ -24,4 +37,11 @@ A \code{ggplot2} object or a list of objects, invisibly.
 }
 \description{
 Plot method for PCA plus FDA objects
+}
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 6)
+fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+plot(fit, type = "trajectory", pcs = 1:2, n_subjects = 5)
+plot(fit, type = "variance")
+
 }

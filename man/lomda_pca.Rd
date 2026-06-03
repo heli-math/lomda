@@ -4,12 +4,26 @@
 \alias{lomda_pca}
 \title{Stage 1: PCA on longitudinal omics data}
 \usage{
-lomda_pca(data, n_pc = 3, scale = TRUE, center = TRUE)
+lomda_pca(
+  data,
+  n_pc = 3,
+  id_col = "ID",
+  visit_col = "visit",
+  age_col = "age",
+  scale = TRUE,
+  center = TRUE
+)
 }
 \arguments{
 \item{data}{A data frame formatted as described in \code{\link{lomda}}.}
 
 \item{n_pc}{Integer. Number of principal components to extract.}
+
+\item{id_col}{Character. Name of the subject identifier column.}
+
+\item{visit_col}{Character. Name of the visit column.}
+
+\item{age_col}{Character. Name of the age column.}
 
 \item{scale}{Logical. Scale features to unit variance? Default \code{TRUE}.}
 

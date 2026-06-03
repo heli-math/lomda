@@ -2,32 +2,35 @@
 % Please edit documentation in R/fda.R
 \name{lomda_fda_important}
 \alias{lomda_fda_important}
-\title{Rank metabolites by contribution to an FDA-smoothed PC}
+\title{Rank metabolites by contribution to FDA age-varying PCs}
 \usage{
-lomda_fda_important(x, pc = 1, n_top = 10, weighted = TRUE)
+lomda_fda_important(x, pc = NULL, n_top = 10, weighted = TRUE)
 }
 \arguments{
 \item{x}{A \code{lomda_fda} or \code{lomda} object.}
 
-\item{pc}{Integer vector. PCs used for ranking. Defaults to \code{1}.}
+\item{pc}{Integer vector. PCs used for ranking. Defaults to all fitted PCs.}
 
 \item{n_top}{Integer. Number of features to return.}
 
-\item{weighted}{Logical. If \code{TRUE}, weight each PC by its proportion of
-variance explained before combining rankings.}
+\item{weighted}{Logical. If \code{TRUE}, weight each PC by its age-curve
+variability \eqn{S_k}. If \code{FALSE}, combine absolute loadings without
+FDA weights.}
 }
 \value{
 A data frame containing feature names, loadings, absolute loadings,
   optional weighted importance scores, and rank.
 }
 \description{
-Maps age-smoothed PC trajectories back to the original omics features using
-PCA loadings. For a single PC, features are ranked by absolute loading.
-For multiple PCs, loadings are combined using each PC's variance explained.
+Maps age-smoothed PC trajectories back to the original omics features.
+Each PC is weighted by its age-trajectory variability
+\deqn{S_k = G^{-1}\sum_g \{\hat\mu_k(a_g) - \bar\mu_k\}^2,}
+then feature importance is computed by combining these weights with the
+absolute PCA loadings across the selected PCs.
 }
 \examples{
-dat <- simulate_lomda_data(seed = 1)
-fda <- lomda_fda(dat, n_pc = 3, method = "spline")
-lomda_fda_important(fda, pc = 1, n_top = 10)
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
+fda <- lomda_fda(dat, n_pc = 2, method = "spline")
+lomda_fda_important(fda, n_top = 10)
 
 }

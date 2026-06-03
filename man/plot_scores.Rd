@@ -27,9 +27,9 @@ Produces a scatter plot of PC scores, coloured by a metadata variable.
 Each point is one observation (subject x visit).
 }
 \examples{
-dat <- simulate_lomda_data(seed = 1)
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
 fit <- lomda(dat)
 plot_scores(fit)
-plot_scores(fit, pc_x = 1, pc_y = 3, color_by = "age")
+plot_scores(fit, pc_x = 1, pc_y = 2, color_by = "age")
 
 }

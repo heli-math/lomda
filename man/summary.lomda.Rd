@@ -15,3 +15,9 @@
 Prints a table of Stage 2 LMM coefficient estimates (fixed effects) for
 each PC, including the time-effect slope \eqn{\hat\beta_1}.
 }
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 2)
+fit <- lomda(dat, n_pc = 2, time = "visit")
+summary(fit)
+
+}

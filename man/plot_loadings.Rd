@@ -24,8 +24,8 @@ Plots a biplot-style bar chart of feature loadings for one or two PCs,
 highlighting the top-loading features.
 }
 \examples{
-dat <- simulate_lomda_data(seed = 5)
-fit <- lomda(dat, n_pc = 3)
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 5)
+fit <- lomda(dat, n_pc = 2)
 plot_loadings(fit)
 plot_loadings(fit, pc_x = 1, pc_y = NULL)
 

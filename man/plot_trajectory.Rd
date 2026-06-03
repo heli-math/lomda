@@ -20,8 +20,8 @@ subject trajectories overlaid as thin lines. Useful for visualising the
 time trend estimated by the Stage 2 LMM.
 }
 \examples{
-dat <- simulate_lomda_data(seed = 10)
-fit <- lomda(dat, n_pc = 3)
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 10)
+fit <- lomda(dat, n_pc = 2)
 plot_trajectory(fit)
 
 }

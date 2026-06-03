@@ -34,6 +34,8 @@ prediction and important-feature ranking.
   \item{\code{\link{lomda_fda}}}{Lower-level FDA on PCA scores.}
   \item{\code{\link{lomda_lrt}}}{Likelihood ratio test for visit effects.}
   \item{\code{\link{lomda_wald}}}{Wald test for visit-effect slope.}
+  \item{\code{\link{lomda_important}}}{Rank important metabolites using
+    the fitted Stage 2 model.}
   \item{\code{\link{lomda_fda_important}}}{Rank metabolites contributing
     to FDA-smoothed PCs.}
   \item{\code{\link{plot.lomda}}}{Score, loading, variance, or visit
@@ -47,13 +49,16 @@ prediction and important-feature ranking.
 
 \section{Data format}{
 
-The input data frame must contain:
+The input data frame must contain one row per subject-visit observation.
+By default, \code{\link{lomda}} looks for:
 \itemize{
   \item \code{ID}: subject identifier.
   \item \code{visit}: visit number.
   \item \code{age}: subject age at that visit.
   \item Omics feature columns, such as metabolites, proteins, or genes.
 }
+Alternative metadata column names can be supplied through the \code{ID},
+\code{visit}, and \code{age} arguments of \code{\link{lomda}}.
 }
 
 \section{Getting started}{
@@ -70,7 +75,7 @@ lomda_wald(fit_visit)
 
 fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
 predict(fit_age, ages = c(40, 50, 60))
-lomda_fda_important(fit_age, pc = 1)
+lomda_important(fit_age, n_top = 10)
 }
 }
 

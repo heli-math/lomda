@@ -4,12 +4,12 @@
 \alias{plot_fda_importance}
 \title{Plot important metabolites for an FDA-smoothed PC}
 \usage{
-plot_fda_importance(x, pc = 1, n_top = 15)
+plot_fda_importance(x, pc = NULL, n_top = 15)
 }
 \arguments{
 \item{x}{A \code{lomda_fda} or \code{lomda} object.}
 
-\item{pc}{Integer. PC to use for ranking.}
+\item{pc}{Integer vector. PCs to use for ranking. Defaults to all fitted PCs.}
 
 \item{n_top}{Integer. Number of metabolites to show.}
 }
@@ -18,4 +18,10 @@ A \code{ggplot2} object.
 }
 \description{
 Plot important metabolites for an FDA-smoothed PC
+}
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 5)
+fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+plot_fda_importance(fit, n_top = 5)
+
 }

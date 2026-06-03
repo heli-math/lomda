@@ -34,6 +34,35 @@ test_that("lomda() supports adjustment covariates for visit LMM", {
   expect_false("batch" %in% fit$omics_cols)
 })
 
+test_that("lomda() supports user-supplied metadata column names", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
+                             n_features = 10, seed = 17)
+  names(dat)[1:3] <- c("subject_id", "wave", "age_years")
+
+  fit_visit <- expect_no_error(
+    lomda(dat, ID = "subject_id", visit = "wave", age = "age_years",
+          n_pc = 2, time = "visit")
+  )
+  expect_equal(fit_visit$id_col, "subject_id")
+  expect_equal(fit_visit$time_col, "wave")
+  expect_true(all(c("subject_id", "wave", "age_years") %in%
+                    names(fit_visit$scores)))
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    expect_s3_class(plot_scores(fit_visit), "ggplot")
+    expect_s3_class(plot_trajectory(fit_visit), "ggplot")
+  }
+
+  fit_age <- expect_no_error(
+    lomda(dat, ID = subject_id, visit = wave, age = age_years,
+          n_pc = 2, time = "age", method_fda = "spline",
+          grid_length = 25)
+  )
+  expect_equal(fit_age$id_col, "subject_id")
+  expect_equal(fit_age$age_col, "age_years")
+  pred <- predict(fit_age, ages = c(35, 45, 55))
+  expect_true(all(c("age_years", "PC1", "PC2") %in% names(pred)))
+})
+
 test_that("lomda() routes age analysis to FDA", {
   dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
                              n_features = 10, seed = 13)
@@ -46,6 +75,7 @@ test_that("lomda() routes age analysis to FDA", {
   expect_named(fit$fda_fits, c("PC1", "PC2"))
   pred <- predict(fit, ages = c(35, 45, 55))
   expect_equal(nrow(pred), 3)
+  expect_s3_class(plot(fit, type = "variance"), "ggplot")
 })
 
 test_that("lomda() rejects FDA method for visit LMM", {
@@ -55,10 +85,10 @@ test_that("lomda() rejects FDA method for visit LMM", {
                "method_fda is only used")
 })
 
-test_that("lomda() rejects ambiguous FDA method alias", {
+test_that("lomda() rejects unknown FDA method", {
   dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
                              n_features = 10, seed = 15)
-  expect_error(lomda(dat, n_pc = 2, time = "age", method_fda = "fda"),
+  expect_error(lomda(dat, n_pc = 2, time = "age", method_fda = "bad"),
                "should be one of")
 })
 
@@ -142,8 +172,23 @@ test_that("FDA plot functions return ggplot objects", {
   skip_if_not_installed("ggplot2")
   dat <- simulate_lomda_data(n_subjects = 20, n_features = 10, seed = 11)
   fda <- lomda_fda(dat, n_pc = 2, method = "spline")
-  expect_s3_class(plot_fda_trajectory(fda, pc = 1), "ggplot")
-  expect_s3_class(plot_fda_importance(fda, pc = 1), "ggplot")
+  expect_s3_class(plot_fda_trajectory(fda, pcs = 1:2, n_subjects = 5), "ggplot")
+  expect_s3_class(plot_fda_importance(fda), "ggplot")
+})
+
+test_that("importance ranking works for LMM and FDA fits", {
+  dat <- simulate_lomda_data(n_subjects = 20, n_features = 10, seed = 16)
+  fit_visit <- lomda(dat, n_pc = 2, time = "visit")
+  imp_visit <- lomda_important(fit_visit, n_top = 5)
+  expect_equal(nrow(imp_visit), 5)
+  expect_true(all(c("feature", "importance", "signed_importance", "rank") %in%
+                    names(imp_visit)))
+
+  fit_age <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+  imp_age <- lomda_important(fit_age, n_top = 5)
+  expect_equal(nrow(imp_age), 5)
+  expect_true(all(c("feature", "importance", "signed_importance", "rank") %in%
+                    names(imp_age)))
 })
 
 test_that("lomda errors on bad input", {

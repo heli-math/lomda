@@ -48,8 +48,8 @@ Convenience wrapper that dispatches to specialized plot functions. The
 \code{type} argument selects which plot to produce.
 }
 \examples{
-dat <- simulate_lomda_data(seed = 42)
-fit <- lomda(dat, n_pc = 3)
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 42)
+fit <- lomda(dat, n_pc = 2)
 plot(fit, type = "scores")
 plot(fit, type = "variance")
 plot(fit, type = "loadings")

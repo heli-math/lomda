@@ -19,6 +19,8 @@
 #' @param age_col Character. Name of the age/time column used as the functional
 #'   argument. Defaults to \code{"age"}.
 #' @param id_col Character. Subject identifier column. Defaults to \code{"ID"}.
+#' @param visit_col Character. Visit column retained in score and prediction
+#'   output when present. Defaults to \code{"visit"}.
 #' @param method Character. One of \code{"auto"}, \code{"face"}, or
 #'   \code{"spline"}. Defaults to \code{"auto"}.
 #' @param grid_length Integer. Number of age-grid points for fitted curves.
@@ -33,9 +35,9 @@
 #'   PC-score data, FDA fits for each PC, the age grid, and the matched call.
 #'
 #' @examples
-#' dat <- simulate_lomda_data(n_subjects = 40, n_visits = 3,
-#'                            n_features = 20, seed = 42)
-#' fda <- lomda_fda(dat, n_pc = 3, method = "spline")
+#' dat <- simulate_lomda_data(n_subjects = 10, n_visits = 3,
+#'                            n_features = 8, seed = 42)
+#' fda <- lomda_fda(dat, n_pc = 2, method = "spline")
 #' predict(fda, ages = c(40, 50, 60))
 #' lomda_fda_important(fda, pc = 1, n_top = 5)
 #' plot_fda_trajectory(fda, pc = 1)
@@ -45,6 +47,7 @@ lomda_fda <- function(x,
                       n_pc = 3,
                       age_col = "age",
                       id_col = "ID",
+                      visit_col = "visit",
                       method = c("auto", "face", "spline"),
                       grid_length = 100,
                       scale = FALSE,
@@ -54,6 +57,9 @@ lomda_fda <- function(x,
   method <- match.arg(method)
 
   if (inherits(x, "lomda")) {
+    age_col <- x$age_col %||% age_col
+    id_col <- x$id_col %||% id_col
+    visit_col <- x$visit_col %||% visit_col
     pca_res <- list(
       pca = x$fit_pca,
       scores = x$scores,
@@ -63,8 +69,10 @@ lomda_fda <- function(x,
     n_pc <- x$n_pc
     omics_cols <- x$omics_cols
   } else if (is.data.frame(x)) {
-    pca_res <- lomda_pca(x, n_pc = n_pc, scale = scale, center = center)
-    meta_cols <- c(id_col, "visit", age_col)
+    pca_res <- lomda_pca(x, n_pc = n_pc, id_col = id_col,
+                         visit_col = visit_col, age_col = age_col,
+                         scale = scale, center = center)
+    meta_cols <- c(id_col, visit_col, age_col)
     omics_cols <- setdiff(names(x), meta_cols)
   } else {
     stop("x must be a 'lomda' object or a data frame.")
@@ -113,6 +121,7 @@ lomda_fda <- function(x,
       method = use_method,
       age_col = age_col,
       id_col = id_col,
+      visit_col = visit_col,
       age_grid = age_grid,
       n_pc = n_pc,
       omics_cols = omics_cols,
@@ -126,6 +135,12 @@ lomda_fda <- function(x,
 #'
 #' @param x A \code{lomda_fda} object.
 #' @param ... Ignored.
+#'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
+#' fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+#' print(fit)
+#'
 #' @export
 print.lomda_fda <- function(x, ...) {
   cat("====================================================\n")
@@ -149,6 +164,12 @@ print.lomda_fda <- function(x, ...) {
 #'
 #' @param object A \code{lomda_fda} object.
 #' @param ... Ignored.
+#'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 2)
+#' fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+#' summary(fit)
+#'
 #' @export
 summary.lomda_fda <- function(object, ...) {
   cat("====================================================\n")
@@ -192,6 +213,12 @@ summary.lomda_fda <- function(object, ...) {
 #'
 #' @return A data frame with one row per requested age or new observation.
 #'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 3)
+#' fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+#' predict(fit, ages = c(35, 45, 55))
+#' predict(fit, newdata = dat[1:3, ], type = "deviation")
+#'
 #' @export
 predict.lomda_fda <- function(object,
                               ages = NULL,
@@ -223,7 +250,8 @@ predict.lomda_fda <- function(object,
   pc_scores <- pc_scores[, pc_names, drop = FALSE]
 
   ages <- newdata[[object$age_col]]
-  out <- newdata[, intersect(c(object$id_col, "visit", object$age_col), names(newdata)),
+  out <- newdata[, intersect(c(object$id_col, object$visit_col %||% "visit",
+                               object$age_col), names(newdata)),
                  drop = FALSE]
   for (pc in pc_names) {
     mean_name <- paste0(pc, "_mean")
@@ -237,31 +265,37 @@ predict.lomda_fda <- function(object,
   out
 }
 
-#' Rank metabolites by contribution to an FDA-smoothed PC
+#' Rank metabolites by contribution to FDA age-varying PCs
 #'
-#' Maps age-smoothed PC trajectories back to the original omics features using
-#' PCA loadings. For a single PC, features are ranked by absolute loading.
-#' For multiple PCs, loadings are combined using each PC's variance explained.
+#' Maps age-smoothed PC trajectories back to the original omics features.
+#' Each PC is weighted by its age-trajectory variability
+#' \deqn{S_k = G^{-1}\sum_g \{\hat\mu_k(a_g) - \bar\mu_k\}^2,}
+#' then feature importance is computed by combining these weights with the
+#' absolute PCA loadings across the selected PCs.
 #'
 #' @param x A \code{lomda_fda} or \code{lomda} object.
-#' @param pc Integer vector. PCs used for ranking. Defaults to \code{1}.
+#' @param pc Integer vector. PCs used for ranking. Defaults to all fitted PCs.
 #' @param n_top Integer. Number of features to return.
-#' @param weighted Logical. If \code{TRUE}, weight each PC by its proportion of
-#'   variance explained before combining rankings.
+#' @param weighted Logical. If \code{TRUE}, weight each PC by its age-curve
+#'   variability \eqn{S_k}. If \code{FALSE}, combine absolute loadings without
+#'   FDA weights.
 #'
 #' @return A data frame containing feature names, loadings, absolute loadings,
 #'   optional weighted importance scores, and rank.
 #'
 #' @examples
-#' dat <- simulate_lomda_data(seed = 1)
-#' fda <- lomda_fda(dat, n_pc = 3, method = "spline")
-#' lomda_fda_important(fda, pc = 1, n_top = 10)
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 1)
+#' fda <- lomda_fda(dat, n_pc = 2, method = "spline")
+#' lomda_fda_important(fda, n_top = 10)
 #'
 #' @export
-lomda_fda_important <- function(x, pc = 1, n_top = 10, weighted = TRUE) {
+lomda_fda_important <- function(x, pc = NULL, n_top = 10, weighted = TRUE) {
   if (!inherits(x, "lomda_fda") && !inherits(x, "lomda"))
     stop("x must be a 'lomda_fda' or 'lomda' object.")
+  if (!inherits(x, "lomda_fda"))
+    stop("x must be a PCA+FDA fit. Use lomda_lmm_important() for PCA+LMM fits.")
 
+  pc <- pc %||% seq_len(x$n_pc)
   pc_names <- paste0("PC", pc)
   missing <- setdiff(pc_names, colnames(x$loadings))
   if (length(missing) > 0)
@@ -269,17 +303,23 @@ lomda_fda_important <- function(x, pc = 1, n_top = 10, weighted = TRUE) {
 
   loadings <- x$loadings[, pc_names, drop = FALSE]
   if (weighted) {
-    weights <- x$var_explained[pc_names]
+    weights <- .lomda_fda_curve_scores(x)[pc_names]
     importance <- as.vector(abs(loadings) %*% weights)
+    signed_importance <- as.vector(loadings %*% weights)
   } else {
     importance <- rowSums(abs(loadings))
+    signed_importance <- rowSums(loadings)
   }
 
   out <- data.frame(
     feature = rownames(loadings),
     importance = importance,
+    signed_importance = signed_importance,
     stringsAsFactors = FALSE
   )
+  if (weighted) {
+    out$fda_weighted <- TRUE
+  }
   if (length(pc_names) == 1) {
     out$loading <- loadings[, 1]
     out$abs_loading <- abs(loadings[, 1])
@@ -294,33 +334,63 @@ lomda_fda_important <- function(x, pc = 1, n_top = 10, weighted = TRUE) {
 #' Plot FDA-smoothed PC trajectory over age
 #'
 #' @param x A \code{lomda_fda} object.
-#' @param pc Integer. PC to plot.
+#' @param pc Integer vector. PCs to plot. Defaults to \code{1}. The newer
+#'   \code{pcs} argument can also be used.
+#' @param pcs Integer vector. PCs to plot. If supplied, overrides \code{pc}.
 #' @param show_subjects Logical. Show individual subject trajectories.
+#' @param n_subjects Integer or \code{NULL}. Maximum number of subjects to
+#'   draw. Defaults to \code{NULL}, meaning all subjects. Use a smaller number
+#'   for large datasets.
+#' @param subject_ids Optional vector of subject IDs to draw. Overrides
+#'   \code{n_subjects}.
 #' @param color_by Optional score-data column used to colour observed points.
 #'   Defaults to \code{NULL}, which draws points in a single colour.
 #'
 #' @return A \code{ggplot2} object.
 #'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 4)
+#' fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+#' plot_fda_trajectory(fit, pcs = 1:2, n_subjects = 5)
+#'
 #' @export
-plot_fda_trajectory <- function(x, pc = 1, show_subjects = TRUE,
+plot_fda_trajectory <- function(x, pc = 1, pcs = NULL, show_subjects = TRUE,
+                                n_subjects = NULL, subject_ids = NULL,
                                 color_by = NULL) {
   if (!inherits(x, "lomda_fda"))
     stop("x must be a 'lomda_fda' object.")
 
-  pc_name <- paste0("PC", pc)
-  if (!pc_name %in% names(x$fda_fits))
-    stop(pc_name, " not found in FDA fit.")
+  pcs <- pcs %||% pc
+  pc_names <- .lomda_pc_names(x, pcs)
 
   scores_df <- x$scores
-  curve <- x$fda_fits[[pc_name]]$mean_curve
   if (!is.null(color_by) && !color_by %in% names(scores_df))
     stop(color_by, " not found in score data frame.")
 
-  p <- ggplot2::ggplot(scores_df, ggplot2::aes(x = .data[[x$age_col]],
-                                               y = .data[[pc_name]]))
+  scores_df <- .lomda_select_subjects(
+    scores_df, id_col = x$id_col, n_subjects = n_subjects,
+    subject_ids = subject_ids
+  )
+
+  keep_cols <- unique(c(x$id_col, x$age_col, color_by, pc_names))
+  long <- tidyr::pivot_longer(
+    scores_df[, keep_cols, drop = FALSE],
+    cols = dplyr::all_of(pc_names),
+    names_to = "PC",
+    values_to = "score"
+  )
+
+  curve <- do.call(rbind, lapply(pc_names, function(pc_name) {
+    out <- x$fda_fits[[pc_name]]$mean_curve
+    out$PC <- pc_name
+    out
+  }))
+
+  p <- ggplot2::ggplot(long, ggplot2::aes(x = .data[[x$age_col]],
+                                          y = .data$score))
   if (show_subjects) {
     p <- p + ggplot2::geom_line(
-      ggplot2::aes(group = .data[[x$id_col]]),
+      ggplot2::aes(group = interaction(.data[[x$id_col]], .data$PC)),
       color = "grey78", linewidth = 0.35, alpha = 0.65
     )
   }
@@ -338,11 +408,12 @@ plot_fda_trajectory <- function(x, pc = 1, show_subjects = TRUE,
                        ggplot2::aes(x = .data$age, y = .data$mean),
                        inherit.aes = FALSE, color = "#B23A48",
                        linewidth = 1.35) +
+    ggplot2::facet_wrap(~ .data$PC, scales = "free_y") +
     ggplot2::labs(
       x = x$age_col,
-      y = paste(pc_name, "score"),
+      y = "PC score",
       color = color_by,
-      title = paste("Age-smoothed trajectory for", pc_name),
+      title = "Age-smoothed PC trajectories",
       subtitle = paste("FDA method:", x$method)
     ) +
     .lomda_theme()
@@ -351,28 +422,29 @@ plot_fda_trajectory <- function(x, pc = 1, show_subjects = TRUE,
 #' Plot important metabolites for an FDA-smoothed PC
 #'
 #' @param x A \code{lomda_fda} or \code{lomda} object.
-#' @param pc Integer. PC to use for ranking.
+#' @param pc Integer vector. PCs to use for ranking. Defaults to all fitted PCs.
 #' @param n_top Integer. Number of metabolites to show.
 #'
 #' @return A \code{ggplot2} object.
 #'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 5)
+#' fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+#' plot_fda_importance(fit, n_top = 5)
+#'
 #' @export
-plot_fda_importance <- function(x, pc = 1, n_top = 15) {
-  imp <- lomda_fda_important(x, pc = pc, n_top = n_top, weighted = FALSE)
+plot_fda_importance <- function(x, pc = NULL, n_top = 15) {
+  imp <- lomda_fda_important(x, pc = pc, n_top = n_top, weighted = TRUE)
   imp$feature <- factor(imp$feature, levels = rev(imp$feature))
 
   ggplot2::ggplot(imp, ggplot2::aes(x = .data$feature,
-                                    y = .data$importance,
-                                    fill = .data$loading)) +
+                                    y = .data$importance)) +
     ggplot2::geom_col(width = 0.72) +
     ggplot2::coord_flip() +
-    ggplot2::scale_fill_gradient2(low = "#2166AC", mid = "white",
-                                  high = "#B23A48", midpoint = 0) +
     ggplot2::labs(
       x = "Feature",
-      y = "Absolute loading",
-      fill = "Loading",
-      title = paste("Top metabolites contributing to PC", pc)
+      y = "FDA-weighted loading importance",
+      title = "Top metabolites contributing to age-varying PCs"
     ) +
     .lomda_theme()
 }
@@ -380,25 +452,38 @@ plot_fda_importance <- function(x, pc = 1, n_top = 15) {
 #' Plot method for PCA plus FDA objects
 #'
 #' @param x A \code{lomda_fda} object.
-#' @param type Character. One of \code{"trajectory"}, \code{"importance"}, or
-#'   \code{"all"}. Defaults to \code{"all"}.
-#' @param pc Integer. PC to plot.
+#' @param type Character. One of \code{"variance"}, \code{"trajectory"},
+#'   \code{"importance"}, or \code{"all"}. Defaults to \code{"all"}.
+#' @param pc Integer vector. PCs to plot. Defaults to \code{1}.
+#' @param pcs Integer vector. PCs to plot. If supplied, overrides \code{pc}.
+#' @param n_subjects Integer or \code{NULL}. Maximum number of subjects to
+#'   draw in trajectory plots. Defaults to all subjects.
 #' @param pause Logical. If \code{TRUE}, wait for Return between plots when
 #'   multiple plots are requested.
 #' @param ... Additional arguments passed to the specialized plotting function.
 #'
 #' @return A \code{ggplot2} object or a list of objects, invisibly.
 #'
+#' @examples
+#' dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 6)
+#' fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+#' plot(fit, type = "trajectory", pcs = 1:2, n_subjects = 5)
+#' plot(fit, type = "variance")
+#'
 #' @export
-plot.lomda_fda <- function(x, type = "all", pc = 1,
-                           pause = interactive(), ...) {
-  type <- match.arg(type, c("trajectory", "importance", "all"))
-  types <- if (type == "all") c("trajectory", "importance") else type
+plot.lomda_fda <- function(x, type = "all", pc = 1, pcs = NULL,
+                           n_subjects = NULL, pause = interactive(), ...) {
+  type <- match.arg(type, c("variance", "trajectory", "importance", "all"))
+  types <- if (type == "all") c("variance", "trajectory", "importance") else type
+  trajectory_pcs <- pcs %||% pc
+  importance_pcs <- pcs
 
   plots <- lapply(types, function(one_type) {
     p <- switch(one_type,
-      trajectory = plot_fda_trajectory(x, pc = pc, ...),
-      importance = plot_fda_importance(x, pc = pc, ...)
+      variance = plot_variance_explained(x),
+      trajectory = plot_fda_trajectory(x, pcs = trajectory_pcs,
+                                       n_subjects = n_subjects, ...),
+      importance = plot_fda_importance(x, pc = importance_pcs, ...)
     )
     print(p)
     if (pause && one_type != tail(types, 1)) {
@@ -466,4 +551,25 @@ plot.lomda_fda <- function(x, type = "all", pc = 1,
   if (length(missing) > 0)
     stop("Requested PCs not found in FDA fit: ", paste(missing, collapse = ", "))
   pc_names
+}
+
+.lomda_select_subjects <- function(scores_df, id_col, n_subjects = NULL,
+                                   subject_ids = NULL) {
+  if (!is.null(subject_ids)) {
+    return(scores_df[scores_df[[id_col]] %in% subject_ids, , drop = FALSE])
+  }
+  if (is.null(n_subjects)) {
+    return(scores_df)
+  }
+  n_subjects <- max(0L, as.integer(n_subjects))
+  keep <- utils::head(unique(scores_df[[id_col]]), n_subjects)
+  scores_df[scores_df[[id_col]] %in% keep, , drop = FALSE]
+}
+
+.lomda_fda_curve_scores <- function(x) {
+  scores <- vapply(x$fda_fits, function(fit) {
+    mu <- fit$mean_curve$mean
+    mean((mu - mean(mu))^2)
+  }, numeric(1))
+  scores[names(x$fda_fits)]
 }

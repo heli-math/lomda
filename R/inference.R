@@ -99,6 +99,7 @@ lomda_wald <- function(x, use_t = TRUE) {
          "fits only.")
 
   time_col <- x$time_col %||% "visit"
+  time_row_name <- .lomda_bt(time_col)
 
   results <- lapply(names(x$fit_lmm), function(pc) {
     fit <- x$fit_lmm[[pc]]
@@ -106,7 +107,8 @@ lomda_wald <- function(x, use_t = TRUE) {
     if (use_t) {
       # lmerTest provides Satterthwaite df + t-stat + p-value in coef(summary())
       cs      <- as.data.frame(coef(summary(fit)))
-      time_row <- cs[time_col, , drop = FALSE]
+      row_name <- if (time_col %in% rownames(cs)) time_col else time_row_name
+      time_row <- cs[row_name, , drop = FALSE]
       beta1   <- time_row[1, "Estimate"]
       se      <- time_row[1, "Std. Error"]
       t_stat  <- time_row[1, "t value"]
@@ -119,8 +121,9 @@ lomda_wald <- function(x, use_t = TRUE) {
     } else {
       # z-test (large-sample)
       cs      <- as.data.frame(coef(summary(fit)))
-      beta1   <- cs[time_col, "Estimate"]
-      se      <- cs[time_col, "Std. Error"]
+      row_name <- if (time_col %in% rownames(cs)) time_col else time_row_name
+      beta1   <- cs[row_name, "Estimate"]
+      se      <- cs[row_name, "Std. Error"]
       z_stat  <- beta1 / se
       pval    <- 2 * pnorm(-abs(z_stat))
       df_sw   <- NA_real_

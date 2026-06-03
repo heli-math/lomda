@@ -37,3 +37,10 @@ A data frame with one row per requested age or new observation.
 \description{
 Predict age-specific PC trajectories from a PCA plus FDA fit
 }
+\examples{
+dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 3)
+fit <- lomda(dat, n_pc = 2, time = "age", method_fda = "spline")
+predict(fit, ages = c(35, 45, 55))
+predict(fit, newdata = dat[1:3, ], type = "deviation")
+
+}

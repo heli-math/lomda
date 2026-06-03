@@ -4,7 +4,14 @@
 \alias{lomda_lmm}
 \title{Stage 2: LMM on PC scores}
 \usage{
-lomda_lmm(scores_df, n_pc = 3, time_col = "visit", adjust = NULL, REML = FALSE)
+lomda_lmm(
+  scores_df,
+  n_pc = 3,
+  time_col = "visit",
+  id_col = "ID",
+  adjust = NULL,
+  REML = FALSE
+)
 }
 \arguments{
 \item{scores_df}{A data frame containing at least \code{ID}, the time
@@ -15,6 +22,9 @@ variable, optional adjustment covariates, and columns named \code{PC1},
 
 \item{time_col}{Character. Time variable used as the fixed effect in the
 LMM. Defaults to \code{"visit"}.}
+
+\item{id_col}{Character. Subject identifier column used for the random
+intercept. Defaults to \code{"ID"}.}
 
 \item{adjust}{Character vector of additional fixed-effect covariates.
 Defaults to \code{NULL}.}
