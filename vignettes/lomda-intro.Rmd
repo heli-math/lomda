@@ -186,3 +186,22 @@ names(lmm_res$fits)
 ```{r session}
 sessionInfo()
 ```
+
+---
+
+## Citation
+
+If you use `lomda` in your research, please cite:
+
+```text
+He Li, Said el Bouhaddani, Jeanine Houwing-Duistermaat (2026).
+lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis.
+R package version 0.1.0. https://github.com/heli-math/lomda
+```
+
+---
+
+## Funding
+
+This work was supported by a STSM Grant from COST Action CA21169, supported by
+COST (European Cooperation in Science and Technology).

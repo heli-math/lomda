@@ -36,12 +36,13 @@ devtools::install_github("heli-math/lomda")
 library(lomda)
 
 dat <- simulate_lomda_data(
-  n_subjects = 50,
-  n_visits = 3,
-  n_features = 50,
-  n_signal = 5,
-  time_effect = 1,
-  seed = 2026
+  n_subjects         = 50,
+  n_visits           = 3,
+  n_features         = 50,
+  n_pc               = 3,
+  age_effect         = 0.3,
+  missing_visit_prob = 0.3,
+  seed               = 2026
 )
 
 # Stage 2a: PCA + LMM over visit
@@ -54,7 +55,7 @@ lomda_wald(fit_visit)
 
 plot(fit_visit, type = "scores")
 plot(fit_visit, type = "trajectory")
-plot(fit_visit, type = "all", pause = TRUE)
+plot(fit_visit, type = "all")
 
 # Stage 2b: PCA + FDA over age
 fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
@@ -66,7 +67,7 @@ lomda_important(fit_age, n_top = 10)
 plot(fit_age, type = "variance")
 plot_fda_trajectory(fit_age, pcs = 1:3, n_subjects = 50)
 plot_fda_importance(fit_age)
-plot(fit_age, type = "all", pcs = 1:3, n_subjects = 50, pause = TRUE)
+plot(fit_age, type = "all", pcs = 1:3, n_subjects = 50)
 ```
 
 ## Choosing the Stage 2 Model
