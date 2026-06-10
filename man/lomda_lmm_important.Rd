@@ -24,7 +24,7 @@ A data frame containing feature names, importance scores, signed
 For PCA+LMM fits, metabolite importance is computed across selected PCs as
 \deqn{I_r = \sum_k |w_{rk}\hat\beta_{1k}|,}
 where \eqn{w_{rk}} is the PCA loading of feature \eqn{r} on PC \eqn{k}, and
-\eqn{\hat\beta_{1k}} is the fitted visit-effect slope for PC \eqn{k}.
+\eqn{\hat\beta_{1k}} is the fitted time-effect slope for PC \eqn{k}.
 }
 \examples{
 dat <- simulate_lomda_data(n_subjects = 10, n_features = 8, seed = 2)

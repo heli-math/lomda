@@ -74,19 +74,16 @@ lomda_pca <- function(data,
 #' have PC scores.
 #'
 #' The model for the \eqn{k}-th PC is:
-#' \deqn{t_{ijk} = \beta_{0k} + \beta_{1k} time_{ij} +
-#'   z_{ij}^\top \gamma_k + b_{ik} + e_{ijk}.}
+#' \deqn{t_{ijk} = \beta_{0k} + \beta_{1k} \cdot j +
+#'   b_{ik} + e_{ijk}.}
 #'
 #' @param scores_df A data frame containing at least \code{ID}, the time
-#'   variable, optional adjustment covariates, and columns named \code{PC1},
-#'   \code{PC2}, etc.
+#'   variable, and columns named \code{PC1}, \code{PC2}, etc.
 #' @param n_pc Integer. Number of PC columns to model.
 #' @param time_col Character. Time variable used as the fixed effect in the
 #'   LMM. Defaults to \code{"visit"}.
 #' @param id_col Character. Subject identifier column used for the random
 #'   intercept. Defaults to \code{"ID"}.
-#' @param adjust Character vector of additional fixed-effect covariates.
-#'   Defaults to \code{NULL}.
 #' @param REML Logical. Use REML? Default \code{FALSE} (required for LRT).
 #'
 #' @return A list with:
@@ -109,7 +106,6 @@ lomda_lmm <- function(scores_df,
                       n_pc       = 3,
                       time_col   = "visit",
                       id_col     = "ID",
-                      adjust     = NULL,
                       REML       = FALSE) {
   pc_names <- paste0("PC", seq_len(n_pc))
   missing  <- setdiff(pc_names, names(scores_df))
@@ -121,17 +117,9 @@ lomda_lmm <- function(scores_df,
   if (!id_col %in% names(scores_df))
     stop(id_col, " not found in score data frame.")
 
-  if (length(adjust) > 0 && !all(adjust %in% names(scores_df))) {
-    stop("Some adjustment covariates were not found in score data: ",
-         paste(setdiff(adjust, names(scores_df)), collapse = ", "))
-  }
-
-  cov_str   <- if (length(adjust) > 0)
-                 paste(vapply(adjust, .lomda_bt, character(1)), collapse = " + ")
-               else NULL
   time_term <- .lomda_bt(time_col)
-  fixed_rhs <- if (!is.null(cov_str)) paste(time_term, "+", cov_str) else time_term
-  null_rhs  <- if (!is.null(cov_str)) cov_str else "1"
+  fixed_rhs <- time_term
+  null_rhs  <- "1"
   random_rhs <- paste0("(1|", .lomda_bt(id_col), ")")
 
   fits      <- vector("list", n_pc); names(fits)      <- pc_names

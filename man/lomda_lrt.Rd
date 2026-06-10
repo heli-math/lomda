@@ -16,19 +16,20 @@ A data frame with one row per PC and columns:
   \item{\code{logLik_full}}{Log-likelihood of the full model.}
   \item{\code{logLik_null}}{Log-likelihood of the null model.}
   \item{\code{LRT_stat}}{Likelihood ratio test statistic.}
-  \item{\code{df}}{Degrees of freedom (1).}
-  \item{\code{p_value}}{P-value from the chi-squared distribution.}
+  \item{\code{df}}{Degrees of freedom (1 due to local test).}
+  \item{\code{p_value}}{p-value of the LRT.}
 }
 }
 \description{
 Tests whether the time-effect slope (\eqn{\beta_1}) is significantly
 different from zero for each PC, by comparing the full LMM (with time)
-against a nested null model (without time). Both models are fitted by
+against a null model (without time). Both models are fitted by
 maximum likelihood (\code{REML = FALSE}).
 }
 \details{
 The LRT statistic is:
 \deqn{LRT = -2(\ell_{\text{null}} - \ell_{\text{full}}) \sim \chi^2(1)}
+under \eqn{H_0}.
 }
 \examples{
 dat <- simulate_lomda_data(n_subjects = 60, seed = 99)

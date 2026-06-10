@@ -52,11 +52,11 @@ plot.lomda <- function(x, type = "all",
       plot_color_by <- x$time_col %||% x$visit_col %||% "visit"
     }
     p <- switch(one_type,
+      variance   = plot_variance_explained(x, ...),
       scores     = plot_scores(x,     pc_x = pc_x, pc_y = pc_y,
                                color_by = plot_color_by, ...),
       loadings   = plot_loadings(x,   pc_x = pc_x, pc_y = pc_y,
                                  n_top = n_top, ...),
-      variance   = plot_variance_explained(x, ...),
       trajectory = plot_trajectory(x, ...)
     )
     print(p)

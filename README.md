@@ -81,7 +81,7 @@ lomda(dat, time = "age", method_fda = "spline")
 For visit-indexed analysis, `lomda()` fits PCA followed by LMM:
 
 ```r
-fit_visit <- lomda(dat, time = "visit", adjust = c("sex", "batch"))
+fit_visit <- lomda(dat, time = "visit")
 ```
 
 For age-indexed analysis, `lomda()` fits PCA followed by FDA:
@@ -96,8 +96,8 @@ for backward-compatible scripts.
 
 ## Data Format
 
-The input data frame should have one row per subject-visit observation. By
-default, LOMDA expects these metadata columns:
+The input data frame should have one row per subject-visit observation. LOMDA
+expects these metadata columns:
 
 | Column | Name | Description |
 |--------|------|-------------|
@@ -106,19 +106,8 @@ default, LOMDA expects these metadata columns:
 | 3 | `age` | Subject age at that visit |
 | 4+ | omics features | Metabolites, proteins, genes, or other omics variables |
 
-One row is one subject-visit observation.
-
-If your dataset uses different names, pass them to `lomda()`:
-
-```r
-fit <- lomda(
-  dat,
-  ID = "subject_id",
-  visit = "wave",
-  age = "age_years",
-  time = "visit"
-)
-```
+One row is one subject-visit observation. Rename your metadata columns to
+`ID`, `visit`, and `age` before calling `lomda()`.
 
 ## Statistical Model
 

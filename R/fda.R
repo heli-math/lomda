@@ -268,9 +268,17 @@ predict.lomda_fda <- function(object,
 #' Rank metabolites by contribution to FDA age-varying PCs
 #'
 #' Maps age-smoothed PC trajectories back to the original omics features.
-#' Each PC is weighted by its age-trajectory variability
-#' \deqn{S_k = G^{-1}\sum_g \{\hat\mu_k(a_g) - \bar\mu_k\}^2,}
-#' then feature importance is computed by combining these weights with the
+#' For each PC, the age-trajectory variability is defined as
+#' \deqn{
+#' S_k =
+#' \frac{1}{|\mathcal A|}
+#' \int_{\mathcal A}
+#' \{\hat\mu_k(a) - \bar\mu_k\}^2 \, da,
+#' }
+#' where \eqn{\mathcal A} is the observed age range and \eqn{\bar\mu_k} is the
+#' average value of \eqn{\hat\mu_k(a)} over this range.
+#' In practice, this quantity is approximated on an age grid.
+#' Feature importance is then computed by combining these weights with the
 #' absolute PCA loadings across the selected PCs.
 #'
 #' @param x A \code{lomda_fda} or \code{lomda} object.

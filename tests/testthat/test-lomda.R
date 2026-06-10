@@ -23,44 +23,12 @@ test_that("lomda() fits without error on simulated data", {
   expect_named(fit$fit_lmm_null, c("PC1", "PC2"))
 })
 
-test_that("lomda() supports adjustment covariates for visit LMM", {
-  dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
-                             n_features = 10, seed = 12)
-  dat$batch <- rep(c("A", "B"), length.out = nrow(dat))
-  fit <- expect_no_error(lomda(dat, n_pc = 2, time = "visit",
-                               adjust = "batch"))
-  expect_equal(fit$adjust, "batch")
-  expect_true("batch" %in% names(fit$scores))
-  expect_false("batch" %in% fit$omics_cols)
-})
-
-test_that("lomda() supports user-supplied metadata column names", {
+test_that("lomda() requires ID, visit, and age metadata columns", {
   dat <- simulate_lomda_data(n_subjects = 20, n_visits = 3,
                              n_features = 10, seed = 17)
   names(dat)[1:3] <- c("subject_id", "wave", "age_years")
 
-  fit_visit <- expect_no_error(
-    lomda(dat, ID = "subject_id", visit = "wave", age = "age_years",
-          n_pc = 2, time = "visit")
-  )
-  expect_equal(fit_visit$id_col, "subject_id")
-  expect_equal(fit_visit$time_col, "wave")
-  expect_true(all(c("subject_id", "wave", "age_years") %in%
-                    names(fit_visit$scores)))
-  if (requireNamespace("ggplot2", quietly = TRUE)) {
-    expect_s3_class(plot_scores(fit_visit), "ggplot")
-    expect_s3_class(plot_trajectory(fit_visit), "ggplot")
-  }
-
-  fit_age <- expect_no_error(
-    lomda(dat, ID = subject_id, visit = wave, age = age_years,
-          n_pc = 2, time = "age", method_fda = "spline",
-          grid_length = 25)
-  )
-  expect_equal(fit_age$id_col, "subject_id")
-  expect_equal(fit_age$age_col, "age_years")
-  pred <- predict(fit_age, ages = c(35, 45, 55))
-  expect_true(all(c("age_years", "PC1", "PC2") %in% names(pred)))
+  expect_error(lomda(dat, n_pc = 2, time = "visit"), "ID")
 })
 
 test_that("lomda() routes age analysis to FDA", {
@@ -197,6 +165,4 @@ test_that("lomda errors on bad input", {
   expect_error(lomda(dat[, -1], n_pc = 2), "ID")
   # n_pc too large
   expect_error(lomda(dat, n_pc = 100), "n_pc")
-  # Bad covariate
-  expect_error(lomda(dat, adjust = "nonexistent"), "nonexistent")
 })

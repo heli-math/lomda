@@ -4,19 +4,11 @@
 \alias{lomda_lmm}
 \title{Stage 2: LMM on PC scores}
 \usage{
-lomda_lmm(
-  scores_df,
-  n_pc = 3,
-  time_col = "visit",
-  id_col = "ID",
-  adjust = NULL,
-  REML = FALSE
-)
+lomda_lmm(scores_df, n_pc = 3, time_col = "visit", id_col = "ID", REML = FALSE)
 }
 \arguments{
 \item{scores_df}{A data frame containing at least \code{ID}, the time
-variable, optional adjustment covariates, and columns named \code{PC1},
-\code{PC2}, etc.}
+variable, and columns named \code{PC1}, \code{PC2}, etc.}
 
 \item{n_pc}{Integer. Number of PC columns to model.}
 
@@ -25,9 +17,6 @@ LMM. Defaults to \code{"visit"}.}
 
 \item{id_col}{Character. Subject identifier column used for the random
 intercept. Defaults to \code{"ID"}.}
-
-\item{adjust}{Character vector of additional fixed-effect covariates.
-Defaults to \code{NULL}.}
 
 \item{REML}{Logical. Use REML? Default \code{FALSE} (required for LRT).}
 }
@@ -46,8 +35,8 @@ have PC scores.
 }
 \details{
 The model for the \eqn{k}-th PC is:
-\deqn{t_{ijk} = \beta_{0k} + \beta_{1k} time_{ij} +
-  z_{ij}^\top \gamma_k + b_{ik} + e_{ijk}.}
+\deqn{t_{ijk} = \beta_{0k} + \beta_{1k} \cdot j +
+  b_{ik} + e_{ijk}.}
 }
 \examples{
 dat <- simulate_lomda_data(seed = 7)

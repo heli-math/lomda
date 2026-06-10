@@ -50,8 +50,8 @@
 #'   \item \code{age}: subject age at that visit.
 #'   \item Omics feature columns, such as metabolites, proteins, or genes.
 #' }
-#' Alternative metadata column names can be supplied through the \code{ID},
-#' \code{visit}, and \code{age} arguments of \code{\link{lomda}}.
+#' Rename source metadata columns to \code{ID}, \code{visit}, and \code{age}
+#' before calling \code{\link{lomda}}.
 #'
 #' @section Getting started:
 #' \preformatted{

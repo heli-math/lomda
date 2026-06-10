@@ -6,13 +6,9 @@
 \usage{
 lomda(
   data,
-  ID = "ID",
-  visit = "visit",
-  age = "age",
   n_pc = 3,
   time = c("visit", "age"),
-  adjust = NULL,
-  method_fda = NULL,
+  method_fda = "auto",
   grid_length = 100,
   scale = FALSE,
   center = TRUE,
@@ -20,16 +16,8 @@ lomda(
 )
 }
 \arguments{
-\item{data}{A data frame with one row per subject-visit observation.}
-
-\item{ID}{Character. Name of the subject identifier column. Defaults to
-\code{"ID"}.}
-
-\item{visit}{Character. Name of the visit/time-index column used by the
-PCA+LMM workflow. Defaults to \code{"visit"}.}
-
-\item{age}{Character. Name of the age column used by the PCA+FDA workflow.
-Defaults to \code{"age"}.}
+\item{data}{A data frame with one row per subject-visit observation,
+including meta data such as ID, visit, age.}
 
 \item{n_pc}{Integer. Number of PCs to extract and model in Stage 2.
 Defaults to \code{3}.}
@@ -37,34 +25,28 @@ Defaults to \code{3}.}
 \item{time}{Character. Stage 2 time scale. Use \code{"visit"} for PCA+LMM
 or \code{"age"} for PCA+FDA.}
 
-\item{adjust}{Character vector of additional covariate column names to
-include in the Stage 2 LMM when \code{time = "visit"} (for example,
-\code{c("sex", "batch")}). These columns are excluded from the PCA omics
-block. Defaults to \code{NULL}.}
-
 \item{method_fda}{Character. FDA smoother used only when \code{time = "age"}.
 One of \code{"auto"}, \code{"face"}, or \code{"spline"}.
-Defaults to \code{NULL}, which uses \code{"auto"} for age analyses.}
+Defaults to \code{"auto"}.}
 
 \item{grid_length}{Integer. Number of age-grid points for FDA curves when
 \code{time = "age"}. Defaults to \code{100}.}
 
 \item{scale}{Logical. Whether to scale the omics features to unit variance
-before PCA. Defaults to \code{TRUE}.}
+before PCA. Defaults to \code{FALSE}.}
 
 \item{center}{Logical. Whether to center the omics features before PCA.
 Defaults to \code{TRUE}.}
 
 \item{REML}{Logical. Whether to use Restricted Maximum Likelihood (REML)
-in Stage 2. Defaults to \code{FALSE} (ML, required for LRT).}
+in Stage 2. Defaults to \code{FALSE}.}
 }
 \value{
 An object of class \code{"lomda"} with the following components:
 \describe{
   \item{\code{fit_pca}}{The \code{\link[stats]{prcomp}} object from Stage 1.}
   \item{\code{scores}}{Data frame of PC scores merged with metadata
-    (ID, visit, age, and optional adjustment covariates, using the column
-    names supplied by the user).}
+    (ID, visit, age).}
   \item{\code{var_explained}}{Named numeric vector of variance explained by each PC.}
   \item{\code{loadings}}{Matrix of PCA loadings (features x PCs).}
   \item{\code{stage2}}{Either \code{"lmm"} or \code{"fda"}.}
@@ -75,41 +57,44 @@ An object of class \code{"lomda"} with the following components:
   \item{\code{fda_fits}}{For \code{time = "age"}, named list of FDA fits.}
   \item{\code{n_pc}}{Number of PCs modelled.}
   \item{\code{time}}{Time scale used in Stage 2.}
-  \item{\code{adjust}}{Adjustment covariates used in Stage 2 LMM.}
   \item{\code{omics_cols}}{Names of the omics feature columns used in PCA.}
   \item{\code{call}}{The matched call.}
 }
 }
 \description{
-Fits a two-stage \eqn{lomda} model to longitudinal omics data.
+Fits a two-stage model to longitudinal omics data.
 
 \strong{Stage 1}: PCA is applied to the omics measurements (metabolites,
-proteins, etc.) pooled across all visits. The resulting PC scores capture
-the major axes of variation in the high-dimensional data.
+proteins, etc.) stacked across all visits. The resulting PC scores
+will be further analysed in the second stage.
 
-\strong{Stage 2}: The PC scores are modelled using one of two workflows.
+\strong{Stage 2}: The PC scores are modelled using one of these two workflows.
 
-If \code{time = "visit"}, each PC is analysed with a Linear Mixed Model
+If \code{time = "visit"}, each PC\eqn{j} is modelled by a Linear Mixed Model
 (LMM) with subject-specific random intercepts:
 
-\deqn{t_{ijk} = \beta_{0k} + \beta_{1k} visit_{ij} + b_{ik} + e_{ijk}.}
+\deqn{t_{ijk} = \beta_{0k} + \beta_{1k} \cdot j + b_{ik} + e_{ijk}.}
 
 If \code{time = "age"}, each PC is smoothed as a function of age using
 Functional Data Analysis (FDA):
 
 \deqn{t_{ijk} = \mu_k(age_{ij}) + u_{ik}(age_{ij}) + e_{ijk}.}
+
+Here, \eqn{i=1,...,N} indexes subjects,
+\eqn{j=1,...,M_i} indexes the observed visits for subject \eqn{i},
+\eqn{k=1,...,K} indexes PCs,
+\eqn{age_{ij}} is the age of subject \eqn{i} at visit \eqn{j}.
 }
 \examples{
 dat <- simulate_lomda_data(n_subjects = 50, n_visits = 3, n_features = 20,
                            seed = 42)
 fit_visit <- lomda(dat, n_pc = 3, time = "visit")
-fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
-
-names(dat)[1:3] <- c("subject_id", "wave", "age_years")
-fit_custom <- lomda(dat, ID = "subject_id", visit = "wave",
-                    age = "age_years", time = "visit")
 print(fit_visit)
 summary(fit_visit)
+
+fit_age <- lomda(dat, n_pc = 3, time = "age", method_fda = "spline")
+print(fit_age)
+summary(fit_age)
 
 }
 \seealso{
