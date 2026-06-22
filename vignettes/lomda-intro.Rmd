@@ -194,7 +194,7 @@ sessionInfo()
 If you use `lomda` in your research, please cite:
 
 ```text
-He Li, Said el Bouhaddani, Jeanine Houwing-Duistermaat (2026).
+He Li, Said el Bouhaddani, Haiyan Liu, Georgios Aivaliotis, Jeanine Houwing-Duistermaat (2026).
 lomda: Longitudinal Omics Multivariate Dimension-reduction Analysis.
 R package version 0.1.0. https://github.com/heli-math/lomda
 ```
