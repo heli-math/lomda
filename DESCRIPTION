@@ -12,6 +12,12 @@ Authors@R: c(
     given = "Said", family = "el Bouhaddani", role = "aut"
     ),
     person(
+    given = "Haiyan", family = "Liu", role = "aut"
+    ),
+    person(
+    given = "Georgios", family = "Aivaliotis", role = "aut"
+    ),
+    person(
     given = "Jeanine", family = "Houwing-Duistermaat", role = "aut"
     )
   )

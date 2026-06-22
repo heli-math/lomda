@@ -102,6 +102,8 @@ Useful links:
 Authors:
 \itemize{
   \item Said el Bouhaddani
+  \item Haiyan Liu
+  \item Georgios Aivaliotis
   \item Jeanine Houwing-Duistermaat
 }
 
